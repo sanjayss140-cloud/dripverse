@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { StoreProvider } from './store/StoreContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -42,7 +42,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <StoreProvider>
-      <BrowserRouter>
+      <HashRouter>
         <ScrollToTop />
         <Layout>
           <Routes>
@@ -88,7 +88,7 @@ export default function App() {
             } />
           </Routes>
         </Layout>
-      </BrowserRouter>
+      </HashRouter>
     </StoreProvider>
   );
 }
