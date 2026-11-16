@@ -3,16 +3,12 @@ import {
   Layers,
   Sparkles,
   Shuffle,
-  Eye,
-  Check,
   X,
   Star,
-  Sliders,
-  ShieldCheck,
   ArrowRight,
   Loader2
 } from 'lucide-react';
-import { WardrobeItem, TryOnResponse } from '../types';
+import { WardrobeItem } from '../types';
 import { api } from '../api';
 import confetti from 'canvas-confetti';
 
@@ -43,7 +39,6 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
       setExcludedIds((prev) => prev.filter((id) => id !== itemId));
     } else {
       setExcludedIds((prev) => [...prev, itemId]);
-      // Remove from selected if excluded
       setSelectedItems((prev) => prev.filter((i) => i.id !== itemId));
     }
   };
@@ -62,10 +57,10 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
 
       try {
         confetti({
-          particleCount: 50,
-          spread: 70,
+          particleCount: 45,
+          spread: 60,
           origin: { y: 0.6 },
-          colors: ['#8b5cf6', '#ec4899', '#3b82f6'],
+          colors: ['#171717', '#7547D9', '#EAEAEA'],
         });
       } catch (e) {}
     } catch (err: any) {
@@ -81,17 +76,17 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
   const compatibilityScore = selectedItems.length >= 2 ? (isDiverse ? 9.6 : 9.1) : 8.5;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+    <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-studio-border pb-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-semibold mb-2">
-            <Layers className="w-3.5 h-3.5 text-violet-400" />
-            <span>Wardrobe Combinator & Anti-Repetition Generator</span>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-studio-secondary border border-studio-border text-studio-text text-[11px] font-mono tracking-widest uppercase mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-studio-text" />
+            <span>WARDROBE COMBINATOR • WHITE STUDIO</span>
           </div>
-          <h2 className="text-2xl font-bold text-white font-display">Outfit Creator</h2>
-          <p className="text-xs text-zinc-400">
-            Experiment with garment layering or let our anti-repetition Surprise Me algorithm build fresh combinations.
+          <h2 className="text-2xl sm:text-3xl font-black text-studio-text font-display">Outfit Creator</h2>
+          <p className="text-xs text-studio-muted">
+            Experiment with garment layering or let our anti-repetition Surprise Me algorithm compose fresh looks.
           </p>
         </div>
 
@@ -99,17 +94,17 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
         <button
           onClick={handleSurpriseMe}
           disabled={isSurpriseLoading}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white font-extrabold text-xs sm:text-sm flex items-center space-x-2.5 transition-all shadow-glow-md hover:scale-[1.03]"
+          className="px-6 py-3 rounded-xl bg-studio-text hover:bg-studio-text/90 disabled:opacity-40 text-studio-bg font-extrabold text-xs sm:text-sm flex items-center space-x-2.5 transition-all shadow-studio-sm hover:scale-[1.01]"
         >
           {isSurpriseLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin text-studio-bg" />
               <span>Synthesizing Combinations...</span>
             </>
           ) : (
             <>
-              <Shuffle className="w-4 h-4 animate-bounce" />
-              <span>SURPRISE ME</span>
+              <Shuffle className="w-4 h-4 text-studio-bg" />
+              <span>SURPRISE ME FIT</span>
             </>
           )}
         </button>
@@ -119,22 +114,22 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Active Stage (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-sm font-bold text-white font-display">
+          <div className="p-6 rounded-3xl border border-studio-border bg-studio-bg space-y-5 shadow-studio-card">
+            <div className="flex items-center justify-between pb-3 border-b border-studio-border">
+              <h3 className="text-sm font-bold text-studio-text font-display">
                 Current Combination ({selectedItems.length})
               </h3>
-              <div className="flex items-center space-x-1.5 text-xs text-violet-400 font-bold">
+              <div className="flex items-center space-x-1.5 text-xs text-studio-text font-bold">
                 <Star className="w-3.5 h-3.5 fill-current" />
                 <span>{compatibilityScore}/10 Synergy</span>
               </div>
             </div>
 
             {selectedItems.length === 0 ? (
-              <div className="text-center py-10 text-zinc-400 text-xs space-y-2">
-                <p>No garments selected yet.</p>
-                <p className="text-[11px] text-zinc-500">
-                  Select items from the right, or press <span className="text-violet-400 font-semibold">SURPRISE ME</span>.
+              <div className="text-center py-12 text-studio-muted text-xs space-y-2">
+                <p className="font-semibold text-studio-text">No garments selected yet.</p>
+                <p className="text-[11px] text-studio-muted">
+                  Select items from the right, or press <span className="text-studio-text font-bold">SURPRISE ME FIT</span>.
                 </p>
               </div>
             ) : (
@@ -142,18 +137,18 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
                 {selectedItems.map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 rounded-2xl bg-zinc-900/80 border border-white/5 flex items-center justify-between"
+                    className="p-3 rounded-2xl bg-studio-secondary border border-studio-border flex items-center justify-between"
                   >
                     <div className="flex items-center space-x-3">
                       <img
                         src={item.clean_image_url || item.image_url}
                         alt={item.name}
-                        className="w-12 h-12 object-contain rounded-lg bg-black/40 p-1"
+                        className="w-12 h-12 object-contain rounded-lg bg-studio-bg p-1 border border-studio-border"
                       />
                       <div>
-                        <p className="text-xs font-semibold text-white truncate max-w-[170px]">{item.name}</p>
-                        <div className="flex items-center space-x-2 mt-0.5 text-[10px] text-zinc-400">
-                          <span className="text-violet-400">{item.category}</span>
+                        <p className="text-xs font-semibold text-studio-text truncate max-w-[170px]">{item.name}</p>
+                        <div className="flex items-center space-x-2 mt-0.5 text-[10px] text-studio-muted">
+                          <span className="font-mono">{item.category}</span>
                           <span>•</span>
                           <span>{item.main_color}</span>
                         </div>
@@ -161,7 +156,7 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
                     </div>
                     <button
                       onClick={() => toggleSelectItem(item)}
-                      className="p-1 rounded-lg text-zinc-500 hover:text-red-400"
+                      className="p-1.5 rounded-lg text-studio-muted hover:text-red-500 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -172,12 +167,12 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
 
             {/* Surprise Me Notes / MIRA feedback */}
             {surpriseResult && (
-              <div className="p-4 rounded-2xl bg-violet-950/20 border border-violet-500/20 space-y-2 text-xs">
-                <div className="flex items-center space-x-2 text-violet-300 font-semibold">
-                  <Sparkles className="w-4 h-4 text-violet-400" />
+              <div className="p-4 rounded-2xl bg-studio-secondary border border-studio-border space-y-2 text-xs">
+                <div className="flex items-center space-x-2 text-studio-text font-semibold">
+                  <Sparkles className="w-4 h-4 text-studio-text" />
                   <span>{surpriseResult.title}</span>
                 </div>
-                <p className="text-[11px] text-zinc-300 leading-relaxed font-normal">
+                <p className="text-[11px] text-studio-muted leading-relaxed font-normal">
                   {surpriseResult.stylist_appreciation}
                 </p>
               </div>
@@ -187,23 +182,23 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
             <button
               onClick={() => onSendToTryOn(selectedItems)}
               disabled={selectedItems.length === 0}
-              className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all shadow-glow-sm"
+              className="w-full py-3 rounded-xl bg-studio-text hover:bg-studio-text/90 disabled:opacity-40 text-studio-bg font-bold text-xs flex items-center justify-center space-x-2 transition-all shadow-studio-sm"
             >
               <span>Transfer to Virtual Try-On Studio</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-studio-bg" />
             </button>
           </div>
         </div>
 
         {/* Wardrobe Drawer for Selection (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="p-6 rounded-3xl border border-studio-border bg-studio-bg space-y-4 shadow-studio-card">
+            <div className="flex items-center justify-between pb-3 border-b border-studio-border">
               <div>
-                <h3 className="text-sm font-bold text-white font-display">Your Wardrobe Vault</h3>
-                <p className="text-[11px] text-zinc-400">Click to add/remove. Click lock to exclude from Surprise Me.</p>
+                <h3 className="text-sm font-bold text-studio-text font-display">Your Wardrobe Vault</h3>
+                <p className="text-[11px] text-studio-muted">Click to add/remove. Click exclude to lock from Surprise Me.</p>
               </div>
-              <span className="text-xs text-zinc-400">{wardrobe.length} Available</span>
+              <span className="text-xs font-mono text-studio-muted">{wardrobe.length} Available</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-1">
@@ -217,13 +212,13 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
                     onClick={() => !isExcluded && toggleSelectItem(item)}
                     className={`p-3 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between relative group ${
                       isExcluded
-                        ? 'opacity-40 border-red-500/30 bg-red-950/10'
+                        ? 'opacity-30 border-studio-border bg-studio-secondary'
                         : isSelected
-                        ? 'border-violet-500 bg-violet-600/20 shadow-glow-sm'
-                        : 'border-white/10 bg-zinc-900/60 hover:border-white/20'
+                        ? 'border-studio-text bg-studio-secondary shadow-studio-sm font-semibold'
+                        : 'border-studio-border bg-studio-bg hover:border-studio-text/40'
                     }`}
                   >
-                    <div className="aspect-square w-full rounded-xl bg-black/40 p-2 flex items-center justify-center mb-2 overflow-hidden">
+                    <div className="aspect-square w-full rounded-xl bg-studio-secondary p-2 flex items-center justify-center mb-2 overflow-hidden border border-studio-border">
                       <img
                         src={item.clean_image_url || item.image_url}
                         alt={item.name}
@@ -232,8 +227,8 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
                     </div>
 
                     <div>
-                      <p className="text-xs font-semibold text-white truncate">{item.name}</p>
-                      <p className="text-[10px] text-zinc-400">{item.subcategory}</p>
+                      <p className="text-xs font-semibold text-studio-text truncate">{item.name}</p>
+                      <p className="text-[10px] text-studio-muted font-mono">{item.subcategory}</p>
                     </div>
 
                     {/* Exclude Toggle Button */}
@@ -243,10 +238,10 @@ export const OutfitCreatorView: React.FC<OutfitCreatorViewProps> = ({
                         e.stopPropagation();
                         toggleExcludeItem(item.id);
                       }}
-                      className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] bg-black/70 text-zinc-400 hover:text-white"
+                      className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-studio-bg/90 backdrop-blur-md border border-studio-border text-studio-muted hover:text-studio-text shadow-sm"
                       title={isExcluded ? 'Include in Surprise Me' : 'Exclude from Surprise Me'}
                     >
-                      {isExcluded ? 'Excluded' : 'Exclude'}
+                      {isExcluded ? 'Locked' : 'Lock'}
                     </button>
                   </div>
                 );

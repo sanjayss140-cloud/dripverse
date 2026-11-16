@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
-  Shirt,
-  UserCheck,
-  RotateCw,
   Download,
-  Bookmark,
-  MessageSquare,
   Check,
-  AlertCircle,
   Loader2,
   ChevronRight,
-  Maximize2,
   Star,
-  Info,
   ShieldCheck,
   Box
 } from 'lucide-react';
@@ -27,6 +19,7 @@ interface TryOnViewProps {
   models: VirtualModelOption[];
   profile?: UserProfile;
   initialSelectedUpper?: WardrobeItem | null;
+  theme?: 'light' | 'dark';
   onOutfitGenerated: (outfit: TryOnResponse) => void;
   onAskMira: (outfit: TryOnResponse) => void;
 }
@@ -36,6 +29,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
   models,
   profile,
   initialSelectedUpper,
+  theme = 'light',
   onOutfitGenerated,
   onAskMira,
 }) => {
@@ -51,14 +45,14 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
     profile?.preferred_model_type || 'model_a_anime_male'
   );
   const [occasion, setOccasion] = useState<string>('Casual Outing');
-  const [outfitName, setOutfitName] = useState<string>('Weekend Signature Look');
+  const [outfitName, setOutfitName] = useState<string>('Tokyo Minimalist Streetwear');
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationStep, setGenerationStep] = useState<string>('');
   const [activeView, setActiveView] = useState<'FRONT' | 'BACK' | 'LEFT' | 'RIGHT' | '3D'>('FRONT');
   const [currentResult, setCurrentResult] = useState<TryOnResponse | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [_errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Auto-select smart defaults if slots are empty
   useEffect(() => {
@@ -86,10 +80,10 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
     setIsGenerating(true);
 
     const steps = [
-      'Parsing uploaded garment geometry & texture maps...',
-      'Aligning garments to selected virtual model anatomy...',
-      'Simulating ambient occlusion, fabric weight & crease drapes...',
-      'Rendering multi-angle perspectives (Front, Back, Left, Right)...'
+      'Extracting physical garment textures, drape & silhouette geometry...',
+      'Mapping authentic clothing layers to model anatomical landmarks...',
+      'Simulating directional studio keylight, contact shadows & fabric tension...',
+      'Synthesizing 4-perspective high-resolution White Studio renders...'
     ];
 
     let stepIndex = 0;
@@ -111,7 +105,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
         accessory_ids: accessoryIds,
         model_type: selectedModelId,
         model_settings: {
-          skin_tone: profile?.skin_tone || '#d8b29c',
+          skin_tone: profile?.skin_tone || '#e8c4a2',
           body_proportions: profile?.body_proportions || 'regular',
         },
         name: outfitName || 'Custom Signature Look',
@@ -123,13 +117,12 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
       setActiveView('FRONT');
       onOutfitGenerated(res);
 
-      // Trigger subtle celebration confetti
       try {
         confetti({
           particleCount: 40,
           spread: 60,
           origin: { y: 0.7 },
-          colors: ['#8b5cf6', '#a855f7', '#10b981'],
+          colors: ['#171717', '#7547D9', '#EAEAEA'],
         });
       } catch (e) {}
     } catch (err: any) {
@@ -151,17 +144,19 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
     document.body.removeChild(a);
   };
 
+  const currentModelObj = models.find((m) => m.id === selectedModelId);
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+    <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* Studio Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-studio-border pb-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            <span>Garment Preservation Engine v1.0</span>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-studio-secondary border border-studio-border text-studio-text text-[11px] font-mono uppercase tracking-widest mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-studio-text" />
+            <span>NEURAL COMPOSITION ENGINE • WHITE STUDIO</span>
           </div>
-          <h2 className="text-2xl font-bold text-white font-display">Virtual Try-On Studio</h2>
-          <p className="text-xs text-zinc-400">
+          <h2 className="text-2xl sm:text-3xl font-black text-studio-text font-display">Virtual Try-On Atelier</h2>
+          <p className="text-xs text-studio-muted">
             Combine items from your vault, select your virtual model, and generate 4-view photorealistic visualizations.
           </p>
         </div>
@@ -169,16 +164,16 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || (!selectedUpper && !selectedBottom)}
-          className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center space-x-2.5 transition-all shadow-glow-md hover:scale-[1.02]"
+          className="px-6 py-3 rounded-xl bg-studio-text hover:bg-studio-text/90 disabled:opacity-40 text-studio-bg font-bold text-xs sm:text-sm flex items-center space-x-2.5 transition-all shadow-studio-sm hover:scale-[1.01]"
         >
           {isGenerating ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Generating Studio Render...</span>
+              <Loader2 className="w-4 h-4 animate-spin text-studio-bg" />
+              <span>Synthesizing Studio Render...</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-studio-bg" />
               <span>Generate Virtual Try-On</span>
             </>
           )}
@@ -189,18 +184,18 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Visual Canvas & Multi-Angle Display (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="glass-card rounded-3xl p-5 border border-white/10 relative overflow-hidden flex flex-col items-center">
+          <div className="rounded-3xl p-5 border border-studio-border bg-studio-bg relative overflow-hidden flex flex-col items-center shadow-studio-card">
             {/* Top View Selector Bar */}
-            <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+            <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-studio-border">
               <div className="flex items-center space-x-1.5 overflow-x-auto">
                 {(['FRONT', 'BACK', 'LEFT', 'RIGHT'] as const).map((v) => (
                   <button
                     key={v}
                     onClick={() => setActiveView(v)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
                       activeView === v
-                        ? 'bg-violet-600 text-white shadow-glow-sm'
-                        : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                        ? 'bg-studio-text text-studio-bg font-bold shadow-studio-sm'
+                        : 'bg-studio-secondary text-studio-muted hover:text-studio-text border border-studio-border'
                     }`}
                   >
                     {v} View
@@ -212,8 +207,8 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                   onClick={() => setActiveView('3D')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
                     activeView === '3D'
-                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-glow-sm'
-                      : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                      ? 'bg-studio-text text-studio-bg font-bold shadow-studio-sm'
+                      : 'bg-studio-secondary text-studio-muted hover:text-studio-text border border-studio-border'
                   }`}
                 >
                   <Box className="w-3.5 h-3.5" />
@@ -225,7 +220,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={handleDownload}
-                    className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors"
+                    className="p-1.5 rounded-lg bg-studio-secondary text-studio-muted hover:text-studio-text hover:bg-studio-card border border-studio-border transition-colors"
                     title="Download Generated High-Res View"
                   >
                     <Download className="w-4 h-4" />
@@ -235,21 +230,18 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
             </div>
 
             {/* Stage Canvas Area */}
-            <div className="relative w-full aspect-[3/4] max-h-[580px] rounded-2xl overflow-hidden bg-[#0a0a0f] border border-white/5 flex items-center justify-center">
+            <div className="relative w-full aspect-[3/4] max-h-[580px] studio-canvas flex items-center justify-center">
               {isGenerating ? (
                 /* Rich Loading State */
-                <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+                <div className="flex flex-col items-center justify-center p-8 text-center space-y-5">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin" />
-                    <Sparkles className="w-6 h-6 text-violet-400 absolute inset-0 m-auto animate-pulse" />
+                    <div className="w-14 h-14 rounded-full border-[3px] border-studio-border border-t-studio-text animate-spin" />
+                    <Sparkles className="w-5 h-5 text-studio-text absolute inset-0 m-auto animate-pulse" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white font-display mb-1">Synthesizing Fit</h4>
-                    <p className="text-xs text-violet-300 animate-pulse">{generationStep}</p>
+                    <h4 className="text-sm font-bold text-studio-text font-display mb-1.5">Compositing Outfit</h4>
+                    <p className="text-[11px] text-studio-muted animate-pulse font-mono leading-relaxed max-w-xs">{generationStep}</p>
                   </div>
-                  <p className="text-[11px] text-zinc-500 max-w-xs">
-                    Faithfully applying colors, logos, and textures to {models.find((m) => m.id === selectedModelId)?.name || 'model'}.
-                  </p>
                 </div>
               ) : activeView === '3D' ? (
                 /* Three.js Interactive 3D Canvas */
@@ -259,72 +251,88 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                   bottomwearColor={selectedBottom?.main_color_hex || '#1e3a8a'}
                   outerwearColor={selectedOuter?.main_color_hex}
                   footwearColor={selectedShoe?.main_color_hex || '#f4f4f5'}
-                  skinTone={profile?.skin_tone || '#d8b29c'}
+                  skinTone={profile?.skin_tone || '#e8c4a2'}
                   bodyProportions={profile?.body_proportions || 'regular'}
+                  theme={theme}
                 />
               ) : currentResult ? (
                 /* Generated AI View Image */
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full flex items-center justify-center">
                   <img
                     src={currentResult.views[activeView] || currentResult.generated_image_url}
                     alt={`${outfitName} - ${activeView}`}
                     className="w-full h-full object-contain"
                   />
-                  <div className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-bold text-violet-300 border border-white/10 uppercase tracking-wider">
+                  <div className="absolute top-3 left-3 badge badge-dark">
                     {activeView} VIEW
                   </div>
-                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-violet-600/90 text-white text-[11px] font-bold flex items-center space-x-1 shadow-glow-sm">
-                    <Star className="w-3.5 h-3.5 fill-current" />
+                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-studio-text text-studio-bg text-[11px] font-bold shadow-studio-sm">
+                    <Star className="w-3 h-3 fill-current" />
                     <span>{currentResult.rating}</span>
                   </div>
                 </div>
               ) : (
-                /* Initial Placeholder Stage */
-                <div className="text-center p-8 space-y-3">
-                  <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto text-violet-400">
-                    <UserCheck className="w-8 h-8" />
+                /* Pre-Try-On Stage: Real Selected Model Preview */
+                <div className="relative w-full h-full flex flex-col items-center justify-center">
+                  <img
+                    src={(() => {
+                      const id = selectedModelId;
+                      const fn = id.includes('anime_male') ? 'model_a_anime_male'
+                        : id.includes('anime_female') ? 'model_b_anime_female'
+                        : id.includes('human_male') ? 'model_c_human_male'
+                        : id.includes('human_female') ? 'model_d_human_female'
+                        : id.includes('mannequin_male') ? 'model_e_mannequin_male'
+                        : id.includes('mannequin_female') ? 'model_f_mannequin_female'
+                        : id;
+                      return `/api/media/models/${fn}.png`;
+                    })()}
+                    alt={currentModelObj?.name || 'Selected Model'}
+                    className="w-full h-full object-contain max-h-[500px]"
+                    style={{ padding: '8px' }}
+                  />
+                  <div className="absolute bottom-3 inset-x-3 p-3 rounded-xl bg-white/90 dark:bg-black/80 backdrop-blur-sm border border-studio-border flex items-center justify-between shadow-studio-sm">
+                    <div>
+                      <p className="text-[11px] font-bold text-studio-text uppercase tracking-wider">{currentModelObj?.name?.split('—')[0] || 'Model'}</p>
+                      <p className="text-[10px] text-studio-muted">Select clothes & click Generate Try-On</p>
+                    </div>
+                    <span className="badge">READY</span>
                   </div>
-                  <h4 className="text-sm font-semibold text-white">Outfit Stage Ready</h4>
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed">
-                    Select your garments on the right, pick one of the 6 virtual models, and press{' '}
-                    <span className="text-violet-400 font-semibold">Generate Virtual Try-On</span> to see the result.
-                  </p>
                 </div>
               )}
             </div>
 
             {/* Garment Preservation Guarantee Pill */}
-            <div className="w-full mt-4 p-3 rounded-xl bg-violet-950/20 border border-violet-500/20 flex items-center justify-between text-xs text-zinc-300">
+            <div className="w-full mt-4 p-3 rounded-xl bg-studio-secondary border border-studio-border flex items-center justify-between text-xs text-studio-text">
               <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <ShieldCheck className="w-4 h-4 text-studio-text shrink-0" />
                 <span className="text-[11px]">
-                  <strong className="text-white">Garment Fidelity Guaranteed:</strong> Exact colors, patterns & styles preserved.
+                  <strong className="text-studio-text font-semibold">Authentic Wardrobe Fidelity:</strong> Original physical garments preserved with true drape.
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-400 hidden sm:block">Model: {models.find((m) => m.id === selectedModelId)?.name}</span>
+              <span className="text-[10px] text-studio-muted hidden sm:block font-mono">{currentModelObj?.name}</span>
             </div>
           </div>
 
-          {/* MIRA Evaluation Accordion (If result available) */}
+          {/* MIRA Evaluation Accordion */}
           {currentResult && (
-            <div className="glass-card rounded-2xl p-5 border border-white/10 space-y-3">
+            <div className="rounded-2xl p-5 border border-studio-border bg-studio-bg space-y-3 shadow-studio-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-violet-600/20 flex items-center justify-center text-violet-400">
-                    <MessageSquare className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-studio-secondary flex items-center justify-center text-studio-text">
+                    <Sparkles className="w-4 h-4" />
                   </div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">MIRA Fashion Critique</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-studio-text">MIRA Fashion Critique</h4>
                 </div>
                 <button
                   onClick={() => onAskMira(currentResult)}
-                  className="text-xs font-semibold text-violet-400 hover:text-violet-300 flex items-center space-x-1"
+                  className="text-xs font-semibold text-studio-text hover:underline flex items-center space-x-1"
                 >
                   <span>Chat with MIRA</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              <p className="text-xs text-zinc-200 leading-relaxed font-normal whitespace-pre-line bg-zinc-900/60 p-3.5 rounded-xl border border-white/5">
+              <p className="text-xs text-studio-text leading-relaxed font-normal whitespace-pre-line bg-studio-secondary p-3.5 rounded-xl border border-studio-border">
                 {currentResult.stylist_notes}
               </p>
             </div>
@@ -333,41 +341,62 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
 
         {/* Right Column: Wardrobe Slots & Model Selection (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Virtual Model Selector (The 6 models) */}
-          <div className="glass-card p-5 rounded-3xl border border-white/10 space-y-3">
+          {/* Virtual Model Selector — Premium Large Cards */}
+          <div className="p-5 rounded-3xl border border-studio-border bg-studio-bg space-y-4 shadow-studio-card">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-white font-display">Virtual Model Selection</h3>
-                <p className="text-[11px] text-zinc-400">Choose from 6 distinct aesthetic presentations</p>
+                <h3 className="text-sm font-bold text-studio-text font-display">Virtual Model Selection</h3>
+                <p className="text-[11px] text-studio-muted">Choose your fashion model for try-on</p>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 font-semibold">
-                6 Available
-              </span>
+              <span className="badge">6 Models</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-3 gap-3">
               {models.map((m) => {
                 const isSelected = selectedModelId === m.id;
+                // Map model id to correct filename
+                const imgFilename = m.id.includes('anime_male') ? 'model_a_anime_male'
+                  : m.id.includes('anime_female') ? 'model_b_anime_female'
+                  : m.id.includes('human_male') ? 'model_c_human_male'
+                  : m.id.includes('human_female') ? 'model_d_human_female'
+                  : m.id.includes('mannequin_male') ? 'model_e_mannequin_male'
+                  : m.id.includes('mannequin_female') ? 'model_f_mannequin_female'
+                  : m.id;
                 return (
                   <button
                     key={m.id}
                     onClick={() => setSelectedModelId(m.id)}
-                    className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-violet-600/20 border-violet-500 text-white shadow-glow-sm'
-                        : 'bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-zinc-200 hover:border-white/20'
-                    }`}
+                    className={`model-card ${isSelected ? 'selected' : ''}`}
+                    title={m.name}
                   >
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] uppercase font-bold text-violet-400">
-                          {m.type_category}
-                        </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-violet-400" />}
+                    {/* Selected indicator */}
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-studio-text flex items-center justify-center z-10">
+                        <Check className="w-3 h-3 text-studio-bg" />
                       </div>
-                      <p className="text-xs font-bold text-white truncate">{m.name}</p>
+                    )}
+
+                    {/* Model Image */}
+                    <div className="model-card-image w-full">
+                      <img
+                        src={`/api/media/models/${imgFilename}.png`}
+                        alt={m.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `/api/media/models/${m.id}.png`;
+                        }}
+                      />
                     </div>
-                    <p className="text-[10px] text-zinc-400 line-clamp-1 mt-1">{m.description}</p>
+
+                    {/* Info */}
+                    <div className="w-full text-center space-y-0.5">
+                      <span className="text-[8px] font-mono uppercase tracking-widest font-bold text-studio-muted block">
+                        {m.type_category}
+                      </span>
+                      <p className="text-[11px] font-bold text-studio-text leading-tight">
+                        {m.name.split('—')[0].split(' ')[0]}
+                      </p>
+                      <p className="text-[9px] text-studio-muted capitalize">{m.gender}</p>
+                    </div>
                   </button>
                 );
               })}
@@ -375,17 +404,17 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
           </div>
 
           {/* Wardrobe Slot Selection Controls */}
-          <div className="glass-card p-5 rounded-3xl border border-white/10 space-y-4">
+          <div className="p-5 rounded-3xl border border-studio-border bg-studio-bg space-y-4 shadow-studio-card">
             <div>
-              <h3 className="text-sm font-bold text-white font-display">Outfit Wardrobe Slots</h3>
-              <p className="text-[11px] text-zinc-400">Pick garments to composite onto the model</p>
+              <h3 className="text-sm font-bold text-studio-text font-display">Outfit Wardrobe Slots</h3>
+              <p className="text-[11px] text-studio-muted">Select garments to composite onto the model</p>
             </div>
 
             {/* Upperwear Slot */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-300 flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-studio-text flex items-center justify-between">
                 <span>1. Upperwear (Tees, Shirts, Hoodies)</span>
-                {selectedUpper && <span className="text-[10px] text-violet-400 font-mono">{selectedUpper.main_color}</span>}
+                {selectedUpper && <span className="text-[10px] text-studio-muted font-mono">{selectedUpper.main_color}</span>}
               </label>
               <select
                 value={selectedUpper?.id || ''}
@@ -393,7 +422,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                   const item = wardrobe.find((w) => w.id === Number(e.target.value));
                   setSelectedUpper(item || null);
                 }}
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
+                className="w-full bg-studio-secondary border border-studio-border rounded-xl px-3 py-2 text-xs text-studio-text focus:outline-none focus:border-studio-text"
               >
                 <option value="">-- None Selected --</option>
                 {wardrobe
@@ -408,9 +437,9 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
 
             {/* Bottomwear Slot */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-300 flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-studio-text flex items-center justify-between">
                 <span>2. Bottomwear (Jeans, Trousers, Cargo)</span>
-                {selectedBottom && <span className="text-[10px] text-violet-400 font-mono">{selectedBottom.main_color}</span>}
+                {selectedBottom && <span className="text-[10px] text-studio-muted font-mono">{selectedBottom.main_color}</span>}
               </label>
               <select
                 value={selectedBottom?.id || ''}
@@ -418,7 +447,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                   const item = wardrobe.find((w) => w.id === Number(e.target.value));
                   setSelectedBottom(item || null);
                 }}
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
+                className="w-full bg-studio-secondary border border-studio-border rounded-xl px-3 py-2 text-xs text-studio-text focus:outline-none focus:border-studio-text"
               >
                 <option value="">-- None Selected --</option>
                 {wardrobe
@@ -433,9 +462,9 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
 
             {/* Outerwear Slot (Optional) */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-300 flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-studio-text flex items-center justify-between">
                 <span>3. Outerwear (Jackets, Blazers, Coats)</span>
-                <span className="text-[10px] text-zinc-500">Optional</span>
+                <span className="text-[10px] text-studio-muted">Optional</span>
               </label>
               <select
                 value={selectedOuter?.id || ''}
@@ -443,7 +472,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                   const item = wardrobe.find((w) => w.id === Number(e.target.value));
                   setSelectedOuter(item || null);
                 }}
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
+                className="w-full bg-studio-secondary border border-studio-border rounded-xl px-3 py-2 text-xs text-studio-text focus:outline-none focus:border-studio-text"
               >
                 <option value="">-- No Outerwear Layer --</option>
                 {wardrobe
@@ -458,9 +487,9 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
 
             {/* Footwear Slot */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-300 flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-studio-text flex items-center justify-between">
                 <span>4. Footwear (Sneakers, Boots, Shoes)</span>
-                {selectedShoe && <span className="text-[10px] text-violet-400 font-mono">{selectedShoe.main_color}</span>}
+                {selectedShoe && <span className="text-[10px] text-studio-muted font-mono">{selectedShoe.main_color}</span>}
               </label>
               <select
                 value={selectedShoe?.id || ''}
@@ -468,7 +497,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                   const item = wardrobe.find((w) => w.id === Number(e.target.value));
                   setSelectedShoe(item || null);
                 }}
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
+                className="w-full bg-studio-secondary border border-studio-border rounded-xl px-3 py-2 text-xs text-studio-text focus:outline-none focus:border-studio-text"
               >
                 <option value="">-- None Selected --</option>
                 {wardrobe
@@ -483,7 +512,7 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
 
             {/* Accessories Chips Selector */}
             <div className="space-y-2">
-              <label className="text-[11px] font-semibold text-zinc-300 block">
+              <label className="text-[11px] font-semibold text-studio-text block">
                 5. Accessories (Watches, Chains, Sunglasses)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -504,8 +533,8 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
                         }}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                           isSelected
-                            ? 'bg-violet-600/30 border-violet-500 text-white shadow-glow-sm'
-                            : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
+                            ? 'bg-studio-text border-studio-text text-studio-bg font-semibold shadow-studio-sm'
+                            : 'bg-studio-secondary border-studio-border text-studio-muted hover:text-studio-text'
                         }`}
                       >
                         {acc.name}
@@ -516,13 +545,13 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
             </div>
 
             {/* Occasion & Outfit Name */}
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/10">
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-studio-border">
               <div>
-                <label className="text-[10px] text-zinc-400 font-semibold block mb-1">Occasion</label>
+                <label className="text-[10px] text-studio-muted font-semibold block mb-1">Occasion</label>
                 <select
                   value={occasion}
                   onChange={(e) => setOccasion(e.target.value)}
-                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white"
+                  className="w-full bg-studio-secondary border border-studio-border rounded-xl px-2.5 py-1.5 text-xs text-studio-text focus:outline-none"
                 >
                   <option value="Casual Outing">Casual Outing</option>
                   <option value="Streetwear Fit">Streetwear Fit</option>
@@ -535,12 +564,12 @@ export const TryOnView: React.FC<TryOnViewProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] text-zinc-400 font-semibold block mb-1">Look Name</label>
+                <label className="text-[10px] text-studio-muted font-semibold block mb-1">Look Name</label>
                 <input
                   type="text"
                   value={outfitName}
                   onChange={(e) => setOutfitName(e.target.value)}
-                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="w-full bg-studio-secondary border border-studio-border rounded-xl px-2.5 py-1.5 text-xs text-studio-text focus:outline-none focus:border-studio-text"
                 />
               </div>
             </div>

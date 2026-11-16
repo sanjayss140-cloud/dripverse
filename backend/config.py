@@ -7,8 +7,9 @@ DATA_DIR = BASE_DIR / "data"
 UPLOAD_DIR = DATA_DIR / "uploads"
 PROCESSED_DIR = DATA_DIR / "processed"
 GENERATED_DIR = DATA_DIR / "generated"
+MODELS_DIR = DATA_DIR / "models"
 
-for directory in [DATA_DIR, UPLOAD_DIR, PROCESSED_DIR, GENERATED_DIR]:
+for directory in [DATA_DIR, UPLOAD_DIR, PROCESSED_DIR, GENERATED_DIR, MODELS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'dripverse.db'}")

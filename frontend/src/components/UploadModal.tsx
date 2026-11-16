@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, X, CheckCircle, AlertCircle, Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
-import { WardrobeItem, WardrobeCategory } from '../types';
+import { UploadCloud, X, CheckCircle, AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import { WardrobeItem } from '../types';
 import { api } from '../api';
 
 interface UploadModalProps {
@@ -35,8 +35,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
     }
 
     setSelectedFiles((prev) => [...prev, ...valid]);
-
-    // Create local object URLs for immediate preview
     const newPreviews = valid.map((f) => URL.createObjectURL(f));
     setPreviews((prev) => [...prev, ...newPreviews]);
   };
@@ -77,22 +75,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="w-full max-w-2xl bg-drip-card border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+      <div className="w-full max-w-2xl bg-studio-card border border-studio-border rounded-2xl p-6 shadow-2xl relative overflow-hidden">
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+        <div className="flex items-center justify-between pb-4 border-b border-studio-border mb-5">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center">
-              <UploadCloud className="w-4 h-4 text-violet-400" />
+            <div className="w-8 h-8 rounded-lg bg-studio-accentSubtle border border-studio-accent/20 flex items-center justify-center">
+              <UploadCloud className="w-4 h-4 text-studio-accent" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white font-display">Add to Wardrobe</h3>
-              <p className="text-xs text-zinc-400">AI automatically detects category, palette, fabric & style</p>
+              <h3 className="text-base font-bold text-studio-text font-display">Add to Wardrobe</h3>
+              <p className="text-xs text-studio-muted">AI automatically detects category, palette, fabric & style</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-studio-muted hover:text-studio-text hover:bg-studio-secondary transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,8 +98,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
 
         {/* Error Notice */}
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-red-950/40 border border-red-500/30 flex items-center space-x-2.5 text-xs text-red-300">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center space-x-2.5 text-xs text-red-600 dark:text-red-400">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -109,11 +107,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
         {/* If Analyzed Results Available: Show AI Insights Summary */}
         {analyzedResults ? (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-violet-950/20 border border-violet-500/20 flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
+            <div className="p-4 rounded-xl bg-studio-accentSubtle border border-studio-accent/20 flex items-center space-x-3">
+              <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
-                <h4 className="text-xs font-semibold text-white">AI Vision Analysis Complete!</h4>
-                <p className="text-[11px] text-zinc-400">
+                <h4 className="text-xs font-semibold text-studio-text">AI Vision Analysis Complete!</h4>
+                <p className="text-[11px] text-studio-muted">
                   {analyzedResults.length} garments categorized with transparent cutouts created.
                 </p>
               </div>
@@ -123,20 +121,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
               {analyzedResults.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 flex items-center space-x-3"
+                  className="p-3 rounded-xl bg-studio-secondary border border-studio-border flex items-center space-x-3"
                 >
                   <img
                     src={item.clean_image_url || item.image_url}
                     alt={item.name}
-                    className="w-14 h-14 object-contain rounded-lg bg-black/40 p-1"
+                    className="w-14 h-14 object-contain rounded-lg bg-studio-card p-1 border border-studio-border"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-white truncate">{item.name}</p>
+                    <p className="text-xs font-semibold text-studio-text truncate">{item.name}</p>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-medium">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-studio-accentSubtle text-studio-accent font-medium">
                         {item.category}
                       </span>
-                      <span className="text-[10px] text-zinc-400">{item.pattern}</span>
+                      <span className="text-[10px] text-studio-muted">{item.pattern}</span>
                     </div>
                   </div>
                 </div>
@@ -145,7 +143,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
 
             <button
               onClick={onClose}
-              className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs transition-all shadow-glow-sm"
+              className="w-full py-2.5 rounded-xl bg-studio-accent hover:bg-studio-accentHover text-white font-semibold text-xs transition-all shadow-studio-sm"
             >
               View Wardrobe
             </button>
@@ -157,7 +155,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-zinc-700 hover:border-violet-500/50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all bg-zinc-900/40 hover:bg-zinc-900/70 group"
+              className="border-2 border-dashed border-studio-border hover:border-studio-accent rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all bg-studio-secondary hover:bg-studio-accentSubtle/30 group"
             >
               <input
                 ref={fileInputRef}
@@ -167,20 +165,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <div className="w-12 h-12 rounded-full bg-violet-600/10 group-hover:bg-violet-600/20 border border-violet-500/20 flex items-center justify-center mb-3 transition-all">
-                <UploadCloud className="w-6 h-6 text-violet-400" />
+              <div className="w-12 h-12 rounded-full bg-studio-accentSubtle border border-studio-accent/20 flex items-center justify-center mb-3 transition-all group-hover:scale-110">
+                <UploadCloud className="w-6 h-6 text-studio-accent" />
               </div>
-              <p className="text-xs font-semibold text-white">Drag & drop your clothing photos here</p>
-              <p className="text-[11px] text-zinc-400 mt-1">or click to browse from device (JPG, PNG, WEBP)</p>
+              <p className="text-xs font-semibold text-studio-text">Drag & drop your clothing photos here</p>
+              <p className="text-[11px] text-studio-muted mt-1">or click to browse from device (JPG, PNG, WEBP)</p>
             </div>
 
             {/* Selected Previews Grid */}
             {previews.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-zinc-300 mb-2">Selected ({previews.length})</p>
+                <p className="text-xs font-medium text-studio-text mb-2">Selected ({previews.length})</p>
                 <div className="grid grid-cols-4 gap-2.5 max-h-48 overflow-y-auto pr-1">
                   {previews.map((src, i) => (
-                    <div key={i} className="relative group rounded-xl overflow-hidden bg-black/40 border border-white/10 aspect-square">
+                    <div key={i} className="relative group rounded-xl overflow-hidden bg-studio-secondary border border-studio-border aspect-square">
                       <img src={src} alt="Preview" className="w-full h-full object-contain p-1.5" />
                       <button
                         onClick={(e) => {
@@ -201,15 +199,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
             {isUploading && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-violet-300 flex items-center space-x-1.5">
+                  <span className="text-studio-accent flex items-center space-x-1.5 font-medium">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Analyzing garments & generating cutouts...</span>
                   </span>
-                  <span className="text-zinc-400">{uploadProgress}%</span>
+                  <span className="text-studio-muted">{uploadProgress}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-studio-secondary rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-violet-600 to-purple-500 transition-all duration-300"
+                    className="h-full bg-studio-accent transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
@@ -221,7 +219,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-medium text-studio-muted hover:text-studio-text transition-colors"
               >
                 Cancel
               </button>
@@ -229,7 +227,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
                 type="button"
                 disabled={selectedFiles.length === 0 || isUploading}
                 onClick={handleSubmit}
-                className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center space-x-2 transition-all shadow-glow-sm"
+                className="px-5 py-2 rounded-xl bg-studio-accent hover:bg-studio-accentHover disabled:opacity-50 text-white font-semibold text-xs flex items-center space-x-2 transition-all shadow-studio-sm"
               >
                 {isUploading ? (
                   <>

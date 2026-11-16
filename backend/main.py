@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from config import CORS_ORIGINS, UPLOAD_DIR, PROCESSED_DIR, GENERATED_DIR
+from config import CORS_ORIGINS, UPLOAD_DIR, PROCESSED_DIR, GENERATED_DIR, MODELS_DIR
 from database import engine, Base, SessionLocal
 import models
 from seed_data import seed_starter_wardrobe_if_empty
@@ -53,6 +53,7 @@ app.add_middleware(
 app.mount("/api/media/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 app.mount("/api/media/processed", StaticFiles(directory=str(PROCESSED_DIR)), name="processed")
 app.mount("/api/media/generated", StaticFiles(directory=str(GENERATED_DIR)), name="generated")
+app.mount("/api/media/models", StaticFiles(directory=str(MODELS_DIR)), name="models")
 
 # Include Routers
 app.include_router(auth_router)

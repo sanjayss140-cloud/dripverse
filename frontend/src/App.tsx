@@ -1,241 +1,94 @@
-import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
-import { Sidebar } from './components/Sidebar';
-import { UploadModal } from './components/UploadModal';
-import { EditItemModal } from './components/EditItemModal';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { StoreProvider } from './store/StoreContext';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import AuthModal from './components/AuthModal';
 
-import { DashboardView } from './views/DashboardView';
-import { WardrobeView } from './views/WardrobeView';
-import { TryOnView } from './views/TryOnView';
-import { AvatarStudioView } from './views/AvatarStudioView';
-import { StylistView } from './views/StylistView';
-import { OutfitCreatorView } from './views/OutfitCreatorView';
-import { OutfitBattleView } from './views/OutfitBattleView';
-import { ColorLabView } from './views/ColorLabView';
-import { SavedLooksView } from './views/SavedLooksView';
-import { PlannerView } from './views/PlannerView';
-import { SettingsView } from './views/SettingsView';
+// Pages
+import HomePage from './pages/HomePage';
+import ShopPage from './pages/ShopPage';
+import ProductPage from './pages/ProductPage';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import WishlistPage from './pages/WishlistPage';
+import AccountPage from './pages/AccountPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import LoginPage from './pages/LoginPage';
+import AdminPage from './pages/AdminPage';
 
-import { User, UserProfile, WardrobeItem, VirtualModelOption, TryOnResponse } from './types';
-import { api } from './api';
-import { Loader2 } from 'lucide-react';
-
-export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('dashboard');
-  const [user, setUser] = useState<User | null>(null);
-  const [wardrobe, setWardrobe] = useState<WardrobeItem[]>([]);
-  const [models, setModels] = useState<VirtualModelOption[]>([]);
-  const [outfits, setOutfits] = useState<TryOnResponse[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Modals & Navigation Bridge State
-  const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
-  const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
-
-  // Hand-off states between views
-  const [selectedTryOnUpper, setSelectedTryOnUpper] = useState<WardrobeItem | null>(null);
-  const [miraPreloadedOutfit, setMiraPreloadedOutfit] = useState<TryOnResponse | null>(null);
-
-  const loadInitialData = async () => {
-    try {
-      const [userData, wardrobeData, modelsData, outfitsData] = await Promise.all([
-        api.getMe(),
-        api.getWardrobeItems(),
-        api.getVirtualModels(),
-        api.getTryOnHistory(),
-      ]);
-
-      setUser(userData);
-      setWardrobe(wardrobeData);
-      setModels(modelsData);
-      setOutfits(outfitsData);
-    } catch (err) {
-      console.error('Data loading note:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+function ScrollToTop() {
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    loadInitialData();
-  }, []);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
 
-  // Handlers for cross-view actions
-  const handleSelectForTryOn = (item: WardrobeItem) => {
-    if (item.category === 'UPPERWEAR') setSelectedTryOnUpper(item);
-    setCurrentTab('tryon');
-  };
+  return null;
+}
 
-  const handleAskMira = (outfit: TryOnResponse) => {
-    setMiraPreloadedOutfit(outfit);
-    setCurrentTab('stylist');
-  };
-
-  const handleSendItemsToTryOn = (items: WardrobeItem[]) => {
-    const upper = items.find((i) => i.category === 'UPPERWEAR');
-    if (upper) setSelectedTryOnUpper(upper);
-    setCurrentTab('tryon');
-  };
-
-  const handleReopenTryOn = (outfit: TryOnResponse) => {
-    setCurrentTab('tryon');
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-drip-dark flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center animate-bounce">
-          <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
-        </div>
-        <p className="text-xs font-semibold text-zinc-400 font-display tracking-widest uppercase">
-          Initializing DRIPVERSE Studio...
-        </p>
-      </div>
-    );
-  }
-
+function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-drip-dark text-zinc-100 flex flex-col">
-      {/* Top Navbar */}
-      <Navbar
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        profile={user?.profile}
-        wardrobeCount={wardrobe.length}
-      />
-
-      {/* Main Body with Sidebar + Active View */}
-      <div className="flex-1 flex w-full">
-        <Sidebar
-          currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
-          isOpenMobile={isMobileSidebarOpen}
-          setIsOpenMobile={setIsMobileSidebarOpen}
-        />
-
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          {currentTab === 'dashboard' && (
-            <DashboardView
-              wardrobe={wardrobe}
-              outfits={outfits}
-              profile={user?.profile}
-              setCurrentTab={setCurrentTab}
-              openUploadModal={() => setIsUploadOpen(true)}
-            />
-          )}
-
-          {currentTab === 'wardrobe' && (
-            <WardrobeView
-              wardrobe={wardrobe}
-              onRefresh={async () => {
-                const updated = await api.getWardrobeItems();
-                setWardrobe(updated);
-              }}
-              openUploadModal={() => setIsUploadOpen(true)}
-              onEditItem={(item) => setEditingItem(item)}
-              onSelectForTryOn={handleSelectForTryOn}
-            />
-          )}
-
-          {currentTab === 'tryon' && (
-            <TryOnView
-              wardrobe={wardrobe}
-              models={models}
-              profile={user?.profile}
-              initialSelectedUpper={selectedTryOnUpper}
-              onOutfitGenerated={(newOutfit) => {
-                setOutfits((prev) => [newOutfit, ...prev]);
-              }}
-              onAskMira={handleAskMira}
-            />
-          )}
-
-          {currentTab === 'avatar-studio' && (
-            <AvatarStudioView
-              models={models}
-              profile={user?.profile}
-              onProfileUpdated={(updated) => {
-                setUser((prev) => (prev ? { ...prev, profile: updated } : null));
-              }}
-            />
-          )}
-
-          {currentTab === 'stylist' && (
-            <StylistView
-              wardrobe={wardrobe}
-              outfits={outfits}
-              preloadedOutfit={miraPreloadedOutfit}
-              onSelectWardrobeItem={handleSelectForTryOn}
-            />
-          )}
-
-          {currentTab === 'outfit-creator' && (
-            <OutfitCreatorView
-              wardrobe={wardrobe}
-              onSendToTryOn={handleSendItemsToTryOn}
-            />
-          )}
-
-          {currentTab === 'outfit-battle' && (
-            <OutfitBattleView wardrobe={wardrobe} />
-          )}
-
-          {currentTab === 'color-lab' && (
-            <ColorLabView
-              wardrobe={wardrobe}
-              onSelectForTryOn={handleSelectForTryOn}
-            />
-          )}
-
-          {currentTab === 'saved-looks' && (
-            <SavedLooksView
-              outfits={outfits}
-              onReopenTryOn={handleReopenTryOn}
-              onRefreshOutfits={async () => {
-                const refreshed = await api.getTryOnHistory();
-                setOutfits(refreshed);
-              }}
-            />
-          )}
-
-          {currentTab === 'planner' && (
-            <PlannerView
-              outfits={outfits}
-              onOpenTryOn={handleReopenTryOn}
-            />
-          )}
-
-          {currentTab === 'settings' && (
-            <SettingsView
-              profile={user?.profile}
-              onProfileUpdated={(updated) => {
-                setUser((prev) => (prev ? { ...prev, profile: updated } : null));
-              }}
-            />
-          )}
-        </main>
-      </div>
-
-      {/* Global Modals */}
-      <UploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onSuccess={(newItems) => {
-          setWardrobe((prev) => [...newItems, ...prev]);
-        }}
-      />
-
-      <EditItemModal
-        item={editingItem}
-        isOpen={Boolean(editingItem)}
-        onClose={() => setEditingItem(null)}
-        onSave={(updated) => {
-          setWardrobe((prev) => prev.map((w) => (w.id === updated.id ? updated : w)));
-        }}
-      />
+    <div className="min-h-screen flex flex-col bg-white">
+      <Header />
+      <main className="flex-1">{children}</main>
+      <Footer />
+      <AuthModal />
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <StoreProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Layout>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+
+            {/* Shop routes */}
+            <Route path="/shop" element={<ShopPage title="SHOP ALL" subtitle="The complete DRIPVERSE collection." />} />
+            <Route path="/new-arrivals" element={<ShopPage filterCategory="new-arrivals" title="NEW ARRIVALS" subtitle="Fresh from the studio." />} />
+            <Route path="/clothing" element={<ShopPage filterCategory="clothing" title="CLOTHING" subtitle="Essential men's clothing." />} />
+            <Route path="/footwear" element={<ShopPage filterCategory="footwear" title="FOOTWEAR" subtitle="Step with purpose." />} />
+            <Route path="/accessories" element={<ShopPage filterCategory="accessories" title="ACCESSORIES" subtitle="Complete the look." />} />
+
+            {/* Product Details */}
+            <Route path="/product/:id" element={<ProductPage />} />
+
+            {/* Commerce */}
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+
+            {/* Account & Auth */}
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<LoginPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+
+            {/* Info pages */}
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+
+            {/* 404 Not Found */}
+            <Route path="*" element={
+              <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4 text-center">
+                <p className="text-xs tracking-[0.3em] uppercase text-gray-400">404 ERROR</p>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight">PAGE NOT FOUND.</h1>
+                <p className="text-gray-500 max-w-sm text-sm">
+                  The page you are looking for does not exist or has been relocated in the DRIPVERSE catalog.
+                </p>
+                <a href="/" className="bg-black text-white px-8 py-3.5 text-xs tracking-widest uppercase font-bold hover:bg-neutral-800 transition-colors">
+                  Return to Home
+                </a>
+              </div>
+            } />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </StoreProvider>
+  );
+}

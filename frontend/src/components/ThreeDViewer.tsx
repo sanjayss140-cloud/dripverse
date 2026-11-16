@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { RotateCw, ZoomIn, ZoomOut, Maximize2, Sun, ShieldCheck } from 'lucide-react';
+import { RotateCw, ZoomIn, ZoomOut, Maximize2, Sun } from 'lucide-react';
 
 interface ThreeDViewerProps {
   modelType: string;
@@ -10,6 +10,7 @@ interface ThreeDViewerProps {
   footwearColor?: string;
   skinTone?: string;
   bodyProportions?: string;
+  theme?: 'light' | 'dark';
 }
 
 export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
@@ -20,6 +21,7 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
   footwearColor = '#f4f4f5',
   skinTone = '#d8b29c',
   bodyProportions = 'regular',
+  theme = 'light',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -27,7 +29,6 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const figureGroupRef = useRef<THREE.Group | null>(null);
 
-  const [lightingPreset, setLightingPreset] = useState<'studio' | 'dramatic' | 'warm'>('studio');
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const isDraggingRef = useRef<boolean>(false);
   const previousMousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -60,30 +61,48 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
 
     container.replaceChildren(renderer.domElement);
 
-    // Studio Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    // Studio Lights adapted to Light / Dark mode
+    const isDark = theme === 'dark';
+    const ambientLight = new THREE.AmbientLight(0xffffff, isDark ? 0.8 : 1.2);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    const keyLight = new THREE.DirectionalLight(0xffffff, isDark ? 1.4 : 1.6);
     keyLight.position.set(3, 4, 3);
     keyLight.castShadow = true;
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0xa855f7, 0.8);
-    rimLight.position.set(-3, 3, -3);
+    const fillLight = new THREE.DirectionalLight(0xf5f3ff, isDark ? 0.6 : 0.9);
+    fillLight.position.set(-3, 2, 2);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0x7547d9, isDark ? 0.8 : 0.4);
+    rimLight.position.set(-2, 3, -3);
     scene.add(rimLight);
 
     // Floor Pedestal
     const pedestalGeo = new THREE.CylinderGeometry(1.2, 1.3, 0.08, 48);
     const pedestalMat = new THREE.MeshStandardMaterial({
-      color: 0x14141c,
-      roughness: 0.4,
-      metalness: 0.6,
+      color: isDark ? 0x14141c : 0xf2f2f7,
+      roughness: 0.3,
+      metalness: isDark ? 0.6 : 0.2,
     });
     const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
     pedestal.position.y = -1.1;
     pedestal.receiveShadow = true;
     scene.add(pedestal);
+
+    // Floor contact shadow disc
+    const shadowGeo = new THREE.RingGeometry(0.1, 1.35, 32);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      color: isDark ? 0x050508 : 0xdddddf,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: isDark ? 0.6 : 0.3,
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowMesh.rotation.x = Math.PI / 2;
+    shadowMesh.position.y = -1.09;
+    scene.add(shadowMesh);
 
     // Figure Group
     const figureGroup = new THREE.Group();
@@ -95,105 +114,133 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
     const isMannequin = modelType.includes('mannequin');
 
     const effectiveSkin = isMannequin
-      ? (isFemale ? '#c8c2b7' : '#2b2b36')
+      ? (isFemale ? '#dcd6cb' : '#32343c')
       : skinTone;
 
     const skinMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(effectiveSkin),
-      roughness: isMannequin ? 0.7 : 0.5,
-      metalness: isMannequin ? 0.1 : 0.05,
+      color: effectiveSkin,
+      roughness: isMannequin ? 0.8 : 0.4,
+      metalness: 0.05,
     });
 
     const upperMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(upperwearColor),
-      roughness: 0.7,
-      metalness: 0.1,
+      color: upperwearColor,
+      roughness: 0.65,
     });
 
     const bottomMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(bottomwearColor),
-      roughness: 0.8,
-      metalness: 0.1,
+      color: bottomwearColor,
+      roughness: 0.7,
     });
 
     const shoeMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(footwearColor),
-      roughness: 0.4,
-      metalness: 0.2,
+      color: footwearColor,
+      roughness: 0.3,
     });
 
-    // Torso (Upperwear)
-    const torsoWidth = isFemale ? 0.36 : 0.42;
-    const torsoGeo = new THREE.CylinderGeometry(torsoWidth * 0.9, torsoWidth * 0.8, 0.7, 32);
+    // Proportions scaling factor
+    const widthScale = bodyProportions === 'athletic' ? 1.15 : bodyProportions === 'slim' ? 0.9 : 1.0;
+    const heightScale = bodyProportions === 'tall' ? 1.08 : 1.0;
+
+    // Torso / Upperwear
+    const torsoGeo = new THREE.CylinderGeometry(
+      (isFemale ? 0.26 : 0.32) * widthScale,
+      (isFemale ? 0.22 : 0.28) * widthScale,
+      0.65 * heightScale,
+      32
+    );
     const torsoMesh = new THREE.Mesh(torsoGeo, upperMat);
-    torsoMesh.position.y = 0.45;
+    torsoMesh.position.y = 0.85 * heightScale;
     torsoMesh.castShadow = true;
     figureGroup.add(torsoMesh);
 
-    // Neck & Head
-    const neckGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.16, 24);
-    const neckMesh = new THREE.Mesh(neckGeo, skinMat);
-    neckMesh.position.y = 0.88;
-    figureGroup.add(neckMesh);
-
-    const headGeo = new THREE.SphereGeometry(0.18, 32, 32);
-    headGeo.scale(1, 1.25, 1);
-    const headMesh = new THREE.Mesh(headGeo, skinMat);
-    headMesh.position.y = 1.14;
-    figureGroup.add(headMesh);
-
-    // Arms
-    const armGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.75, 24);
-    const leftArm = new THREE.Mesh(armGeo, skinMat);
-    leftArm.position.set(-torsoWidth * 1.15, 0.38, 0);
-    leftArm.rotation.z = 0.08;
-    figureGroup.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeo, skinMat);
-    rightArm.position.set(torsoWidth * 1.15, 0.38, 0);
-    rightArm.rotation.z = -0.08;
-    figureGroup.add(rightArm);
-
-    // Legs (Bottomwear)
-    const legGeo = new THREE.CylinderGeometry(0.11, 0.085, 0.95, 24);
-    const leftLeg = new THREE.Mesh(legGeo, bottomMat);
-    leftLeg.position.set(-0.16, -0.38, 0);
-    leftLeg.castShadow = true;
-    figureGroup.add(leftLeg);
-
-    const rightLeg = new THREE.Mesh(legGeo, bottomMat);
-    rightLeg.position.set(0.16, -0.38, 0);
-    rightLeg.castShadow = true;
-    figureGroup.add(rightLeg);
-
-    // Shoes
-    const shoeGeo = new THREE.BoxGeometry(0.15, 0.12, 0.28);
-    const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
-    leftShoe.position.set(-0.16, -0.92, 0.04);
-    figureGroup.add(leftShoe);
-
-    const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
-    rightShoe.position.set(0.16, -0.92, 0.04);
-    figureGroup.add(rightShoe);
-
-    // Optional Outerwear Layer
+    // Outerwear layer if present
     if (outerwearColor) {
       const outerMat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(outerwearColor),
+        color: outerwearColor,
         roughness: 0.5,
       });
-      const outerGeo = new THREE.CylinderGeometry(torsoWidth * 1.05, torsoWidth * 0.95, 0.78, 32);
+      const outerGeo = new THREE.CylinderGeometry(
+        (isFemale ? 0.28 : 0.35) * widthScale,
+        (isFemale ? 0.25 : 0.31) * widthScale,
+        0.68 * heightScale,
+        32
+      );
       const outerMesh = new THREE.Mesh(outerGeo, outerMat);
-      outerMesh.position.y = 0.44;
+      outerMesh.position.y = 0.85 * heightScale;
+      outerMesh.castShadow = true;
       figureGroup.add(outerMesh);
     }
 
-    // Animation Loop
-    let animationId: number;
+    // Head / Mannequin Top
+    if (isMannequin) {
+      // Atelier Dummy Neck Cap
+      const finialGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.16, 16);
+      const finialMat = new THREE.MeshStandardMaterial({
+        color: isFemale ? 0x8c6242 : 0x222226,
+        roughness: 0.4,
+      });
+      const finial = new THREE.Mesh(finialGeo, finialMat);
+      finial.position.y = 1.3 * heightScale;
+      figureGroup.add(finial);
+
+      // Egg Head
+      const eggGeo = new THREE.SphereGeometry(0.18, 24, 24);
+      const eggMesh = new THREE.Mesh(eggGeo, skinMat);
+      eggMesh.scale.set(0.9, 1.2, 0.9);
+      eggMesh.position.y = 1.48 * heightScale;
+      figureGroup.add(eggMesh);
+    } else {
+      // Natural Neck & Head
+      const neckGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.18, 16);
+      const neckMesh = new THREE.Mesh(neckGeo, skinMat);
+      neckMesh.position.y = 1.25 * heightScale;
+      figureGroup.add(neckMesh);
+
+      const headGeo = new THREE.SphereGeometry(0.19, 32, 32);
+      const headMesh = new THREE.Mesh(headGeo, skinMat);
+      headMesh.scale.set(0.92, 1.15, 0.95);
+      headMesh.position.y = 1.44 * heightScale;
+      headMesh.castShadow = true;
+      figureGroup.add(headMesh);
+    }
+
+    // Legs / Bottomwear
+    const legRadius = (isFemale ? 0.09 : 0.11) * widthScale;
+    const legHeight = 0.95 * heightScale;
+
+    // Left Leg
+    const leftLegGeo = new THREE.CylinderGeometry(legRadius, legRadius * 0.8, legHeight, 24);
+    const leftLeg = new THREE.Mesh(leftLegGeo, bottomMat);
+    leftLeg.position.set(-0.16 * widthScale, 0.05, 0);
+    leftLeg.castShadow = true;
+    figureGroup.add(leftLeg);
+
+    // Right Leg
+    const rightLegGeo = new THREE.CylinderGeometry(legRadius, legRadius * 0.8, legHeight, 24);
+    const rightLeg = new THREE.Mesh(rightLegGeo, bottomMat);
+    rightLeg.position.set(0.16 * widthScale, 0.05, 0);
+    rightLeg.castShadow = true;
+    figureGroup.add(rightLeg);
+
+    // Footwear / Shoes
+    const shoeGeo = new THREE.BoxGeometry(0.14 * widthScale, 0.1, 0.3);
+    const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+    leftShoe.position.set(-0.16 * widthScale, -0.48, 0.05);
+    leftShoe.castShadow = true;
+    figureGroup.add(leftShoe);
+
+    const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+    rightShoe.position.set(0.16 * widthScale, -0.48, 0.05);
+    rightShoe.castShadow = true;
+    figureGroup.add(rightShoe);
+
+    // Render loop
+    let reqId: number;
     const animate = () => {
-      animationId = requestAnimationFrame(animate);
-      if (figureGroupRef.current && autoRotate) {
-        figureGroupRef.current.rotation.y += 0.006;
+      reqId = requestAnimationFrame(animate);
+      if (autoRotate && figureGroupRef.current && !isDraggingRef.current) {
+        figureGroupRef.current.rotation.y += 0.008;
       }
       renderer.render(scene, camera);
     };
@@ -208,7 +255,7 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingRef.current || !figureGroupRef.current) return;
       const deltaX = e.clientX - previousMousePositionRef.current.x;
-      figureGroupRef.current.rotation.y += deltaX * 0.008;
+      figureGroupRef.current.rotation.y += deltaX * 0.01;
       previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -216,110 +263,38 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
       isDraggingRef.current = false;
     };
 
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (!cameraRef.current) return;
-      cameraRef.current.position.z = Math.max(
-        2.2,
-        Math.min(5.5, cameraRef.current.position.z + e.deltaY * 0.003)
-      );
-    };
-
     const domElement = renderer.domElement;
     domElement.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    domElement.addEventListener('wheel', handleWheel, { passive: false });
-
-    // Handle Resize
-    const handleResize = () => {
-      if (!container || !renderer || !camera) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
-    };
-    window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(reqId);
       domElement.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      domElement.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('resize', handleResize);
       renderer.dispose();
     };
-  }, [modelType, upperwearColor, bottomwearColor, outerwearColor, footwearColor, skinTone, bodyProportions, autoRotate]);
-
-  // Quick snap camera angles
-  const snapToAngle = (angle: 'front' | 'back' | 'left' | 'right') => {
-    setAutoRotate(false);
-    if (!figureGroupRef.current) return;
-    const angles = {
-      front: 0,
-      back: Math.PI,
-      left: Math.PI / 2,
-      right: -Math.PI / 2,
-    };
-    figureGroupRef.current.rotation.y = angles[angle];
-  };
-
-  const zoomCamera = (direction: 'in' | 'out') => {
-    if (!cameraRef.current) return;
-    const delta = direction === 'in' ? -0.4 : 0.4;
-    cameraRef.current.position.z = Math.max(2.2, Math.min(5.5, cameraRef.current.position.z + delta));
-  };
+  }, [modelType, upperwearColor, bottomwearColor, outerwearColor, footwearColor, skinTone, bodyProportions, theme, autoRotate]);
 
   return (
-    <div className="relative w-full h-full min-h-[480px] bg-gradient-to-b from-[#0e0e14] via-[#12121a] to-[#0a0a0e] rounded-2xl overflow-hidden border border-white/10 select-none">
-      {/* 3D Canvas Mount Point */}
+    <div className="relative w-full h-full flex flex-col items-center justify-center">
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* Angle Presets Bar */}
-      <div className="absolute top-4 left-4 flex items-center space-x-1.5 bg-drip-dark/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-xs">
-        <span className="text-zinc-400 mr-1.5 font-medium">Orbit Angle:</span>
-        {(['front', 'back', 'left', 'right'] as const).map((angle) => (
-          <button
-            key={angle}
-            onClick={() => snapToAngle(angle)}
-            className="px-2.5 py-1 rounded-full uppercase tracking-wider text-[10px] font-semibold bg-zinc-800/80 hover:bg-violet-600 text-white transition-all"
-          >
-            {angle}
-          </button>
-        ))}
-      </div>
-
-      {/* Controls Overlay */}
-      <div className="absolute bottom-4 right-4 flex items-center space-x-2 bg-drip-dark/85 backdrop-blur-md p-2 rounded-xl border border-white/10 shadow-lg text-xs">
+      {/* 3D Floating Control Pill */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-studio-bg/90 backdrop-blur-md border border-studio-border text-xs flex items-center space-x-3 shadow-studio-card">
         <button
           onClick={() => setAutoRotate(!autoRotate)}
-          className={`p-2 rounded-lg transition-all ${
-            autoRotate ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'
+          className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+            autoRotate
+              ? 'bg-studio-accent text-white shadow-studio-sm'
+              : 'bg-studio-secondary text-studio-muted hover:text-studio-text'
           }`}
-          title="Toggle Auto 360 Rotation"
         >
-          <RotateCw className="w-4 h-4" />
+          <RotateCw className="w-3 h-3" />
+          <span>{autoRotate ? 'Rotating' : 'Paused'}</span>
         </button>
-        <button
-          onClick={() => zoomCamera('in')}
-          className="p-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => zoomCamera('out')}
-          className="p-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Informational Badge */}
-      <div className="absolute bottom-4 left-4 flex items-center space-x-2 bg-drip-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-zinc-400">
-        <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
-        <span>Three.js Interactive Studio • Drag to Orbit • Scroll to Zoom</span>
+        <span className="text-[10px] text-studio-muted">Click & drag to orbit</span>
       </div>
     </div>
   );
