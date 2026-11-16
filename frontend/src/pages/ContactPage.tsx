@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useStore } from '../store/StoreContext';
 
 export default function ContactPage() {
+  const { dispatch } = useStore();
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -36,6 +38,21 @@ export default function ContactPage() {
           Message: form.message,
           Submitted_At: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
         }),
+      });
+
+      // Store inquiry locally in Admin Console Inbox
+      dispatch({
+        type: 'ADD_INQUIRY',
+        payload: {
+          id: `INQ-${Math.floor(100 + Math.random() * 900)}`,
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          subject: form.subject,
+          message: form.message,
+          date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          status: 'unread',
+        },
       });
 
       if (response.ok) {
