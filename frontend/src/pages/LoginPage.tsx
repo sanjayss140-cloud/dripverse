@@ -16,8 +16,13 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   // If already logged in, redirect to account
+  React.useEffect(() => {
+    if (state.user) {
+      navigate('/account');
+    }
+  }, [state.user, navigate]);
+
   if (state.user) {
-    navigate('/account');
     return null;
   }
 

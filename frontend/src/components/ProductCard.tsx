@@ -100,17 +100,15 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             />
           </button>
 
-          {/* Quick View on mobile / small */}
-          <Link
-            to={`/product/${product.id}`}
-            onClick={(e) => e.stopPropagation()}
+          {/* Quick View badge on desktop */}
+          <span
             className={`absolute bottom-3 right-3 p-2 bg-white/90 backdrop-blur-sm transition-all duration-200 ${
               hovered ? 'opacity-100' : 'opacity-0'
-            } hidden lg:flex`}
+            } hidden lg:flex pointer-events-none`}
             aria-label="Quick view"
           >
             <Eye size={14} strokeWidth={1.5} />
-          </Link>
+          </span>
 
           {/* Quick Add overlay */}
           <div

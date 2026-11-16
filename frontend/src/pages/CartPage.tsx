@@ -6,12 +6,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CartPage() {
   const { state, dispatch, cartTotal } = useStore();
+  const [promoInput, setPromoInput] = React.useState('');
+  const [discountPercent, setDiscountPercent] = React.useState(0);
+  const [promoMessage, setPromoMessage] = React.useState('');
 
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p);
 
-  const shipping = cartTotal >= 2999 ? 0 : 99;
-  const orderTotal = cartTotal + shipping;
+  const discountAmount = Math.round((cartTotal * discountPercent) / 100);
+  const discountedSubtotal = cartTotal - discountAmount;
+  const shipping = discountedSubtotal >= 2999 ? 0 : 99;
+  const orderTotal = discountedSubtotal + shipping;
+
+  const handleApplyPromo = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = promoInput.trim().toUpperCase();
+    if (clean === 'DRIP10' || clean === 'DRIPVERSE10' || clean === 'SANJAY10') {
+      setDiscountPercent(10);
+      setPromoMessage('✓ 10% DISCOUNT APPLIED SUCCESSFULLY');
+    } else {
+      setPromoMessage('Invalid coupon code. Try code "DRIP10".');
+    }
+  };
 
   if (state.cart.length === 0) {
     return (
@@ -132,13 +148,19 @@ export default function CartPage() {
                 <span className="text-gray-600">Subtotal</span>
                 <span>{formatPrice(cartTotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-neutral-800 font-medium">
+                  <span>Promo Discount ({discountPercent}%)</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Shipping</span>
                 <span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
               </div>
               {shipping > 0 && (
                 <p className="text-xs text-gray-400">
-                  Add {formatPrice(2999 - cartTotal)} more for free shipping
+                  Add {formatPrice(2999 - discountedSubtotal)} more for free shipping
                 </p>
               )}
               <div className="border-t border-gray-200 pt-3 flex justify-between text-sm font-bold">
@@ -148,18 +170,28 @@ export default function CartPage() {
             </div>
 
             {/* Promo */}
-            <div className="mb-6">
+            <form onSubmit={handleApplyPromo} className="mb-6">
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Promo code"
-                  className="flex-1 border border-gray-200 px-3 py-2.5 text-xs outline-none focus:border-black transition-colors bg-white"
+                  placeholder="USE CODE: DRIP10"
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value)}
+                  className="flex-1 border border-gray-200 px-3 py-2.5 text-xs outline-none focus:border-black transition-colors bg-white uppercase font-mono"
                 />
-                <button className="border border-black px-4 py-2.5 text-xs tracking-widest uppercase font-bold hover:bg-black hover:text-white transition-colors">
+                <button
+                  type="submit"
+                  className="border border-black px-4 py-2.5 text-xs tracking-widest uppercase font-bold hover:bg-black hover:text-white transition-colors"
+                >
                   APPLY
                 </button>
               </div>
-            </div>
+              {promoMessage && (
+                <p className={`text-[11px] mt-2 font-medium ${discountAmount > 0 ? 'text-black' : 'text-neutral-500'}`}>
+                  {promoMessage}
+                </p>
+              )}
+            </form>
 
             <Link
               to="/checkout"
