@@ -517,6 +517,63 @@ export const products: Product[] = [
     reviewCount: 167,
     tags: ["shorts", "summer", "tailored"],
   },
+  {
+    id: "c018",
+    name: "Relaxed Linen Overshirt",
+    price: 3499,
+    originalPrice: 4299,
+    category: "clothing",
+    subcategory: "shirts",
+    images: [
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80",
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&q=80",
+    ],
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["Off-White", "Black", "Sand"],
+    description:
+      "Breathable European flax linen with a laid-back silhouette. Ideal for warm evenings and layered aesthetics.",
+    details: [
+      "100% Pure European Linen",
+      "Relaxed camp collar",
+      "Natural shell buttons",
+      "Twin chest utility pockets",
+    ],
+    material: "100% Linen",
+    fit: "Relaxed",
+    stock: 38,
+    isNew: true,
+    rating: 4.9,
+    reviewCount: 142,
+    tags: ["linen", "shirt", "summer", "resort"],
+  },
+  {
+    id: "c019",
+    name: "Cuban Collar Resort Shirt",
+    price: 2199,
+    category: "clothing",
+    subcategory: "shirts",
+    images: [
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=800&q=80",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4b400d?w=800&q=80",
+    ],
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["Black", "White", "Navy"],
+    description:
+      "Sharp yet effortless. A retro-infused Cuban collar silhouette cut in silky smooth modal-cotton blend.",
+    details: [
+      "60% Modal, 40% Cotton",
+      "Open Cuban camp collar",
+      "Straight boxy hem with side vents",
+      "Matte tonal buttons",
+    ],
+    material: "Modal Cotton Blend",
+    fit: "Boxy Relaxed",
+    stock: 52,
+    isTrending: true,
+    rating: 4.7,
+    reviewCount: 185,
+    tags: ["shirt", "cuban-collar", "resort", "minimalist"],
+  },
 
   // ── FOOTWEAR ──────────────────────────────────────────────────
   {

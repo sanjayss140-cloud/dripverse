@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import { useStore } from '../store/StoreContext';
+import { getFallbackImage } from '../utils/imageHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CartPage() {
@@ -73,7 +74,17 @@ export default function CartPage() {
               >
                 {/* Image */}
                 <Link to={`/product/${item.product.id}`} className="w-20 h-24 overflow-hidden bg-gray-100 flex-shrink-0 block">
-                  <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                  <img
+                    src={item.product.images[0] || getFallbackImage(item.product.category, item.product.subcategory)}
+                    alt={item.product.name}
+                    onError={(e) => {
+                      const fallback = getFallbackImage(item.product.category, item.product.subcategory);
+                      if (e.currentTarget.src !== fallback) {
+                        e.currentTarget.src = fallback;
+                      }
+                    }}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
                 </Link>
 
                 {/* Info */}

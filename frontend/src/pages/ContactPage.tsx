@@ -140,17 +140,25 @@ export default function ContactPage() {
               >
                 <CheckCircle size={44} className="mx-auto mb-4 text-white" strokeWidth={1.5} />
                 <h3 className="text-2xl font-black mb-2">INQUIRY RECEIVED.</h3>
-                <p className="text-neutral-300 text-sm max-w-md mx-auto mb-6">
-                  Thank you, <span className="text-white font-bold">{form.name}</span>. Your inquiry has been forwarded directly to Sanjay ({ownerEmail}). You will receive a response within 24 hours.
+                <p className="text-neutral-300 text-sm max-w-md mx-auto mb-4">
+                  Thank you, <span className="text-white font-bold">{form.name}</span>. Your inquiry has been forwarded directly to Sanjay (<span className="text-white font-semibold">{ownerEmail}</span>) and recorded in the Brand Management Console.
                 </p>
+                
+                <div className="bg-neutral-900 border border-neutral-800 p-4 rounded text-left text-xs mb-6 max-w-md mx-auto space-y-1.5">
+                  <p className="text-neutral-400 font-semibold uppercase tracking-wider text-[10px]">Owner Activation Note:</p>
+                  <p className="text-neutral-300">
+                    If this is your first time receiving a message, please check your Gmail (including <strong>Spam / Updates</strong> folder) for an email from <em>FormSubmit</em> with subject <em>"Action Required: Confirm your form submission"</em> and click <strong>"Activate Form"</strong>.
+                  </p>
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
-                    href={`https://wa.me/${ownerPhoneRaw}?text=Hi%20Sanjay,%20I%20just%20sent%20an%20inquiry%20via%20DRIPVERSE.`}
+                    href={`https://wa.me/${ownerPhoneRaw}?text=Hi%20Sanjay,%20I%20just%20sent%20an%20inquiry%20via%20DRIPVERSE:%20"${encodeURIComponent(form.subject)}"%20-%20${encodeURIComponent(form.name)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="bg-white text-black px-6 py-3 text-xs tracking-widest uppercase font-bold hover:bg-neutral-200 transition-colors inline-block"
                   >
-                    Open WhatsApp Chat
+                    Open WhatsApp Chat Now
                   </a>
                   <button
                     onClick={() => { setSent(false); setForm({ name: '', email: '', phone: '', subject: '', message: '' }); }}

@@ -5,6 +5,7 @@ import { products } from '../data/products';
 import { useStore } from '../store/StoreContext';
 import ProductCard from '../components/ProductCard';
 import { SizeGuideModal } from '../components/Sections';
+import { getFallbackImage } from '../utils/imageHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductPage() {
@@ -166,7 +167,17 @@ export default function ProductPage() {
                     selectedImage === i ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={img || getFallbackImage(product.category, product.subcategory)}
+                    alt=""
+                    onError={(e) => {
+                      const fallback = getFallbackImage(product.category, product.subcategory);
+                      if (e.currentTarget.src !== fallback) {
+                        e.currentTarget.src = fallback;
+                      }
+                    }}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -180,8 +191,14 @@ export default function ProductPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  src={product.images[selectedImage]}
+                  src={product.images[selectedImage] || getFallbackImage(product.category, product.subcategory)}
                   alt={product.name}
+                  onError={(e) => {
+                    const fallback = getFallbackImage(product.category, product.subcategory);
+                    if (e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
                   className="w-full h-full object-cover"
                 />
               </AnimatePresence>

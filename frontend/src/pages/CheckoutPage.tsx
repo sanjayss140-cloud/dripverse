@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronRight, Lock } from 'lucide-react';
+import { Check, ChevronRight, Lock, MessageSquare, Mail } from 'lucide-react';
 import { useStore, Address } from '../store/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,15 +40,52 @@ export default function CheckoutPage() {
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p);
 
+  const ownerEmail = 'sanjaysanjay02081@gmail.com';
+  const ownerPhoneRaw = '919361042621';
+
   const handlePlaceOrder = async () => {
     if (!state.user) {
       dispatch({ type: 'SET_AUTH_OPEN', payload: { open: true, mode: 'login' } });
       return;
     }
     setPlacing(true);
-    await new Promise((r) => setTimeout(r, 1500));
     const id = `ORD-${Date.now()}`;
     setOrderId(id);
+
+    // Dispatch order notification directly to Sanjay's Gmail inbox
+    try {
+      const itemsList = state.cart
+        .map(
+          (i) =>
+            `${i.product.name} (Size: ${i.size}, Color: ${i.color}, Qty: ${i.quantity}, Price: ₹${i.product.price})`
+        )
+        .join(' | ');
+
+      await fetch(`https://formsubmit.co/ajax/${ownerEmail}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          _subject: `🛍️ NEW DRIPVERSE ORDER: ${id} (₹${total})`,
+          _template: 'table',
+          _captcha: 'false',
+          Order_ID: id,
+          Customer_Name: address.fullName,
+          Customer_Phone: address.phone,
+          Customer_Email: state.user?.email || 'Guest',
+          Delivery_Address: `${address.line1}, ${address.line2 || ''}, ${address.city}, ${address.state} - ${address.pincode}`,
+          Payment_Method: paymentMethod.toUpperCase(),
+          Total_Amount: `₹${total}`,
+          Items_Purchased: itemsList,
+          Order_Date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        }),
+      });
+    } catch {
+      // Non-blocking: order still completes even if network fails
+    }
+
     dispatch({ type: 'PLACE_ORDER', payload: { items: state.cart, total, address } });
     setPlacing(false);
     setStep('success');
@@ -87,6 +124,7 @@ export default function CheckoutPage() {
   };
 
   if (step === 'success') {
+    const waText = `Hi Sanjay, I have placed order ${orderId} on DRIPVERSE for ₹${total}. Please confirm my shipment!`;
     return (
       <div className="max-w-lg mx-auto px-4 py-24 text-center">
         <motion.div
@@ -100,14 +138,36 @@ export default function CheckoutPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <p className="text-xs tracking-[0.3em] uppercase text-gray-400 mb-2">Order Confirmed</p>
           <h1 className="text-3xl font-black tracking-tight mb-3">THANK YOU.</h1>
-          <p className="text-gray-500 mb-2">Your order has been placed successfully.</p>
-          <p className="text-sm font-bold text-black mb-8">Order ID: {orderId}</p>
-          <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-            You will receive a confirmation email shortly. Your order will be shipped within 1–2 business days.
-          </p>
+          <p className="text-gray-500 mb-2">Your luxury order has been placed successfully.</p>
+          <p className="text-sm font-bold text-black mb-4">Order ID: {orderId}</p>
+
+          <div className="bg-neutral-50 border border-neutral-200 p-4 mb-6 text-left text-xs space-y-2">
+            <div className="flex items-center gap-2 text-neutral-700">
+              <Mail size={14} className="text-black flex-shrink-0" />
+              <span>
+                Order notification dispatched to: <strong className="text-black">{ownerEmail}</strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-neutral-700">
+              <Check size={14} className="text-black flex-shrink-0" />
+              <span>Visible in Owner Console under <strong>CUSTOMER ORDERS</strong></span>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <a
+              href={`https://wa.me/${ownerPhoneRaw}?text=${encodeURIComponent(waText)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full bg-[#222222] text-white py-3.5 px-6 text-xs tracking-widest uppercase font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
+            >
+              <MessageSquare size={16} /> NOTIFY SANJAY ON WHATSAPP (+91 93610 42621)
+            </a>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button onClick={() => navigate('/account')} className="bg-black text-white px-8 py-4 text-xs tracking-widest uppercase font-bold hover:bg-gray-900 transition-colors">
-              VIEW ORDER
+              VIEW IN MY ACCOUNT
             </button>
             <button onClick={() => navigate('/shop')} className="border border-black px-8 py-4 text-xs tracking-widest uppercase font-bold hover:bg-black hover:text-white transition-colors">
               CONTINUE SHOPPING

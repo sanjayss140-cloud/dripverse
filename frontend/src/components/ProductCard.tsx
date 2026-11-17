@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Star } from 'lucide-react';
 import { Product } from '../data/products';
 import { useStore } from '../store/StoreContext';
+import { getFallbackImage } from '../utils/imageHelper';
 import { motion } from 'framer-motion';
 
 interface ProductCardProps {
@@ -59,8 +60,14 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* Image */}
         <div className="relative overflow-hidden bg-gray-100 aspect-[3/4]">
           <img
-            src={product.images[0]}
+            src={product.images[0] || getFallbackImage(product.category, product.subcategory)}
             alt={product.name}
+            onError={(e) => {
+              const fallback = getFallbackImage(product.category, product.subcategory);
+              if (e.currentTarget.src !== fallback) {
+                e.currentTarget.src = fallback;
+              }
+            }}
             className={`w-full h-full object-cover transition-all duration-700 ${
               hovered && product.images[1] ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
             }`}
@@ -69,6 +76,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             <img
               src={product.images[1]}
               alt={product.name}
+              onError={(e) => {
+                const fallback = getFallbackImage(product.category, product.subcategory);
+                if (e.currentTarget.src !== fallback) {
+                  e.currentTarget.src = fallback;
+                }
+              }}
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
                 hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
               }`}

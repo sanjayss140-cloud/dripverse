@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Product, products as initialProducts } from '../data/products';
+import { getFallbackImage, cleanImageUrl } from '../utils/imageHelper';
 
 // ── Types ──────────────────────────────────────────────────────
 export interface CartItem {
@@ -77,12 +78,14 @@ type Action =
   | { type: 'PLACE_ORDER'; payload: { items: CartItem[]; total: number; address: Address } }
   // ── Admin Actions ──
   | { type: 'UPDATE_PRODUCT'; payload: Product }
+  | { type: 'UPDATE_PRODUCT_IMAGE'; payload: { productId: string; image: string } }
   | { type: 'UPDATE_PRODUCT_PRICE'; payload: { productId: string; price: number; originalPrice?: number } }
   | { type: 'UPDATE_PRODUCT_STOCK'; payload: { productId: string; stock: number } }
   | { type: 'TOGGLE_PRODUCT_BADGE'; payload: { productId: string; badge: 'isNew' | 'isTrending' | 'isFeatured' } }
   | { type: 'ADD_PRODUCT'; payload: Product }
   | { type: 'DELETE_PRODUCT'; payload: string }
   | { type: 'RESET_PRODUCTS' }
+  | { type: 'REPAIR_CATALOG_IMAGES' }
   | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; status: 'processing' | 'shipped' | 'delivered' } }
   | { type: 'ADD_INQUIRY'; payload: CustomerInquiry }
   | { type: 'SET_ADMIN_AUTHENTICATED'; payload: boolean };
@@ -251,6 +254,33 @@ function reducer(state: StoreState, action: Action): StoreState {
         products: state.products.map((p) => (p.id === action.payload.id ? action.payload : p)),
       };
     }
+    case 'UPDATE_PRODUCT_IMAGE': {
+      const { productId, image } = action.payload;
+      return {
+        ...state,
+        products: state.products.map((p) =>
+          p.id === productId
+            ? { ...p, images: [image, ...(p.images ? p.images.slice(1) : [])] }
+            : p
+        ),
+      };
+    }
+    case 'REPAIR_CATALOG_IMAGES': {
+      const healed = state.products.map((p) => {
+        let imgs = Array.isArray(p.images) ? [...p.images] : [];
+        if (imgs.length === 0 || !imgs[0] || imgs[0].trim() === '' || imgs[0].includes('google.com/imgres')) {
+          imgs = [getFallbackImage(p.category, p.subcategory)];
+        }
+        if (p.id === 'c8239' || (p.name.toLowerCase().includes('regular fit') && (p.subcategory.toLowerCase().includes('pant') || p.category === 'clothing'))) {
+          imgs = ['https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&q=80', 'https://images.unsplash.com/photo-1555689502-c4b22d76c56f?w=800&q=80'];
+        }
+        return { ...p, images: imgs };
+      });
+      return {
+        ...state,
+        products: healed,
+      };
+    }
     case 'UPDATE_PRODUCT_PRICE': {
       const { productId, price, originalPrice } = action.payload;
       return {
@@ -343,10 +373,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const s = localStorage.getItem('dripverse-store-v2');
       if (s) {
         const parsed = JSON.parse(s);
+        const storedProducts: Product[] = Array.isArray(parsed.products) ? parsed.products : [];
+
+        // Auto-heal and sanitize products from LocalStorage
+        const healedStoredProducts = storedProducts.map((p: Product) => {
+          let imgs = Array.isArray(p.images) ? [...p.images] : [];
+          // Fix pant 'c8239' or any pant with broken Chrome paste
+          if (p.id === 'c8239' || (p.name.toLowerCase().includes('regular fit') && (p.subcategory.toLowerCase().includes('pant') || p.category === 'clothing'))) {
+            if (!imgs[0] || imgs[0].includes('google.com') || imgs[0].trim().length < 15) {
+              imgs = ['https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&q=80', 'https://images.unsplash.com/photo-1555689502-c4b22d76c56f?w=800&q=80'];
+            }
+          }
+
+          // Clean Google search image redirects
+          if (imgs[0]) {
+            imgs[0] = cleanImageUrl(imgs[0]);
+          }
+
+          // If image is missing, empty, or broken, supply high fashion category fallback
+          if (!imgs[0] || imgs[0].trim() === '' || imgs[0].includes('google.com/imgres')) {
+            imgs = [getFallbackImage(p.category, p.subcategory)];
+          }
+
+          return { ...p, images: imgs };
+        });
+
+        // Ensure all baseline catalog items exist even if user accidentally removed one
+        const userAddedProducts = healedStoredProducts.filter(
+          (sp) => !initialProducts.some((ip) => ip.id === sp.id)
+        );
+        const mergedBaseline = initialProducts.map((ip) => {
+          const found = healedStoredProducts.find((sp) => sp.id === ip.id);
+          return found || ip;
+        });
+
+        const finalProducts = [...userAddedProducts, ...mergedBaseline];
+
         return {
           ...def,
           ...parsed,
-          products: parsed.products && parsed.products.length > 0 ? parsed.products : def.products,
+          products: finalProducts.length > 0 ? finalProducts : def.products,
         };
       }
     } catch {
