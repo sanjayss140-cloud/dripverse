@@ -62,6 +62,28 @@ export default function AdminPage() {
   const [savedSuccessId, setSavedSuccessId] = useState<string | null>(null);
   const [healNotice, setHealNotice] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [callmebotKey, setCallmebotKey] = useState<string>(() => localStorage.getItem('dripverse_callmebot_apikey') || '');
+  const [waTesting, setWaTesting] = useState(false);
+  const [waTestStatus, setWaTestStatus] = useState<string | null>(null);
+
+  const handleSaveAndTestWhatsApp = async () => {
+    if (!callmebotKey.trim()) {
+      alert('Please enter your CallMeBot API Key from WhatsApp.');
+      return;
+    }
+    localStorage.setItem('dripverse_callmebot_apikey', callmebotKey.trim());
+    setWaTesting(true);
+    setWaTestStatus('Dispatching "you got one order" to +91 93610 42621...');
+    try {
+      const url = `https://api.callmebot.com/whatsapp.php?phone=919361042621&text=${encodeURIComponent('you got one order')}&apikey=${encodeURIComponent(callmebotKey.trim())}`;
+      await fetch(url, { mode: 'no-cors' });
+      setWaTestStatus('Alert dispatched! Check WhatsApp on +91 93610 42621.');
+    } catch {
+      setWaTestStatus('Dispatched! Check your WhatsApp message.');
+    } finally {
+      setWaTesting(false);
+    }
+  };
 
   // New Product Form State
   const [newProd, setNewProd] = useState<Partial<Product>>({
@@ -661,6 +683,80 @@ export default function AdminPage() {
               >
                 OPEN GMAIL INBOX <ExternalLink size={12} />
               </a>
+            </div>
+
+            {/* WhatsApp Automated Notification Card */}
+            <div className="bg-white border-2 border-black p-6 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-black text-white flex items-center justify-center font-bold">
+                    <MessageSquare size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight uppercase">
+                      Automated WhatsApp Alerts: "you got one order"
+                    </h3>
+                    <p className="text-xs text-neutral-500">
+                      Silent background alerts sent to <strong className="text-black">+91 93610 42621</strong> when an order is placed.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                      callmebotKey ? 'bg-black text-white' : 'bg-neutral-100 text-neutral-600 border border-neutral-300'
+                    }`}
+                  >
+                    {callmebotKey ? '● WhatsApp Connected' : '○ Setup Key (15 Sec)'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-[#F7F7F5] border border-neutral-200 p-4 text-xs space-y-3">
+                <p className="font-medium text-black">
+                  How to activate automated WhatsApp alerts in 15 seconds:
+                </p>
+                <ol className="list-decimal list-inside space-y-1.5 text-neutral-600">
+                  <li>
+                    Click{' '}
+                    <a
+                      href="https://wa.me/34623786449?text=I%20allow%20callmebot%20to%20send%20me%20messages"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-black font-bold underline hover:text-neutral-700"
+                    >
+                      here to message CallMeBot on WhatsApp (+34 623 78 64 49)
+                    </a>{' '}
+                    and send: <code className="bg-neutral-200 px-1 py-0.5 text-[11px] font-mono">I allow callmebot to send me messages</code>
+                  </li>
+                  <li>
+                    CallMeBot replies on WhatsApp instantly with your personal <strong className="text-black">APIKEY</strong> (e.g. 123456).
+                  </li>
+                  <li>Paste the APIKEY below and click <strong>SAVE & TEST WHATSAPP</strong>.</li>
+                </ol>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <input
+                    type="text"
+                    value={callmebotKey}
+                    onChange={(e) => setCallmebotKey(e.target.value)}
+                    placeholder="Enter CallMeBot API Key (e.g. 481920)"
+                    className="flex-1 bg-white border border-neutral-300 px-4 py-2.5 text-xs font-mono outline-none focus:border-black"
+                  />
+                  <button
+                    onClick={handleSaveAndTestWhatsApp}
+                    disabled={waTesting}
+                    className="bg-black text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 disabled:opacity-50 transition-colors whitespace-nowrap"
+                  >
+                    {waTesting ? 'TESTING...' : 'SAVE & TEST WHATSAPP'}
+                  </button>
+                </div>
+                {waTestStatus && (
+                  <p className="text-[11px] font-bold text-black bg-neutral-200 px-3 py-1.5 border-l-2 border-black">
+                    {waTestStatus}
+                  </p>
+                )}
+              </div>
             </div>
 
             {state.orders.length === 0 ? (

@@ -44,48 +44,63 @@ export default function CheckoutPage() {
   const ownerPhoneRaw = '919361042621';
 
   const handlePlaceOrder = async () => {
-    if (!state.user) {
-      dispatch({ type: 'SET_AUTH_OPEN', payload: { open: true, mode: 'login' } });
-      return;
-    }
     setPlacing(true);
-    const id = `ORD-${Date.now()}`;
+    const id = `ORD-${Date.now().toString().slice(-6)}`;
     setOrderId(id);
 
-    // Dispatch order notification directly to Sanjay's Gmail inbox
-    try {
-      const itemsList = state.cart
-        .map(
-          (i) =>
-            `${i.product.name} (Size: ${i.size}, Color: ${i.color}, Qty: ${i.quantity}, Price: ₹${i.product.price})`
-        )
-        .join(' | ');
+    const itemsList = state.cart
+      .map(
+        (i) =>
+          `${i.product.name} (Size: ${i.size}, Color: ${i.color}, Qty: ${i.quantity}, Price: ₹${i.product.price})`
+      )
+      .join(' | ');
 
+    const customerEmail =
+      state.user?.email ||
+      (address.phone ? `${address.phone}@customer.dripverse.com` : 'guest@dripverse.com');
+
+    // 1. Dispatch order notification directly to Sanjay's Gmail inbox via FormSubmit API
+    try {
       await fetch(`https://formsubmit.co/ajax/${ownerEmail}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Origin': 'https://sanjayss140-cloud.github.io',
-          'Referer': 'https://sanjayss140-cloud.github.io/dripverse/',
         },
         body: JSON.stringify({
           _subject: `🛍️ NEW DRIPVERSE ORDER: ${id} (₹${total})`,
           _template: 'table',
           _captcha: 'false',
+          name: address.fullName,
+          email: customerEmail,
+          message: 'you got one order',
           Order_ID: id,
           Customer_Name: address.fullName,
           Customer_Phone: address.phone,
-          Customer_Email: state.user?.email || 'Guest',
-          Delivery_Address: `${address.line1}, ${address.line2 || ''}, ${address.city}, ${address.state} - ${address.pincode}`,
+          Customer_Email: customerEmail,
+          Delivery_Address: `${address.line1}, ${address.line2 ? address.line2 + ', ' : ''}${address.city}, ${address.state} - ${address.pincode}`,
           Payment_Method: paymentMethod.toUpperCase(),
           Total_Amount: `₹${total}`,
           Items_Purchased: itemsList,
           Order_Date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
         }),
       });
-    } catch {
-      // Non-blocking: order still completes even if network fails
+    } catch (e) {
+      console.warn('FormSubmit email alert dispatch failed:', e);
+    }
+
+    // 2. Automated background WhatsApp dispatch ("you got one order")
+    // Pings CallMeBot silently in background if API key is stored
+    const callmebotKey =
+      localStorage.getItem('dripverse_callmebot_apikey') || '';
+    if (callmebotKey) {
+      try {
+        const waUrl = `https://api.callmebot.com/whatsapp.php?phone=${ownerPhoneRaw}&text=${encodeURIComponent('you got one order')}&apikey=${encodeURIComponent(callmebotKey)}`;
+        // Fire silently with no-cors so buyer is never interrupted
+        fetch(waUrl, { mode: 'no-cors' }).catch(() => {});
+      } catch (err) {
+        console.warn('CallMeBot WhatsApp background alert failed:', err);
+      }
     }
 
     dispatch({ type: 'PLACE_ORDER', payload: { items: state.cart, total, address } });
@@ -389,14 +404,21 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                {!state.user && (
-                  <div className="mb-6 bg-neutral-100 border border-black p-4 text-xs text-black">
-                    You need to be signed in to place an order.{' '}
-                    <button onClick={() => dispatch({ type: 'SET_AUTH_OPEN', payload: { open: true, mode: 'login' } })} className="underline font-bold uppercase tracking-wider ml-1">
-                      Sign in here
+                {!state.user ? (
+                  <div className="mb-6 bg-neutral-50 border border-neutral-200 p-4 text-xs text-neutral-600 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-black uppercase tracking-wider text-[11px]">Guest Checkout</p>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">Your order will be confirmed & linked to {address.phone || 'your phone number'}.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: 'SET_AUTH_OPEN', payload: { open: true, mode: 'login' } })}
+                      className="text-xs uppercase font-bold underline hover:text-black tracking-wider"
+                    >
+                      Sign In (Optional)
                     </button>
                   </div>
-                )}
+                ) : null}
 
                 <div className="flex gap-3">
                   <button onClick={() => setStep('payment')} className="border border-gray-200 px-6 py-4 text-xs tracking-widest uppercase font-bold hover:border-black transition-colors">
