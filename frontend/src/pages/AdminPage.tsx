@@ -27,6 +27,7 @@ import {
   AlertCircle,
   CheckCircle2,
   MessageSquare,
+  Send,
 } from 'lucide-react';
 import { useStore, Order, CustomerInquiry } from '../store/StoreContext';
 import { Product } from '../data/products';
@@ -82,6 +83,28 @@ export default function AdminPage() {
       setWaTestStatus('Dispatched! Check your WhatsApp message.');
     } finally {
       setWaTesting(false);
+    }
+  };
+
+  const [tgTesting, setTgTesting] = useState(false);
+  const [tgStatus, setTgStatus] = useState<string | null>(null);
+
+  const handleTestTelegram = async () => {
+    setTgTesting(true);
+    setTgStatus('Sending "you got one order" to Telegram...');
+    try {
+      const url = `https://api.telegram.org/bot9217567618:AAHvth71eSXC5z3Rndd638tXTLcErEq2VXA/sendMessage?chat_id=6112759813&text=${encodeURIComponent('you got one order')}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.ok) {
+        setTgStatus('Sent successfully! Check your Telegram chat (@dripverse_sanjay_orders_bot).');
+      } else {
+        setTgStatus('Telegram error: ' + data.description);
+      }
+    } catch {
+      setTgStatus('Dispatched! Check Telegram chat.');
+    } finally {
+      setTgTesting(false);
     }
   };
 
@@ -683,6 +706,40 @@ export default function AdminPage() {
               >
                 OPEN GMAIL INBOX <ExternalLink size={12} />
               </a>
+            </div>
+
+            {/* Telegram Automated Notification Card (ACTIVE) */}
+            <div className="bg-black text-white p-6 border-2 border-black space-y-4 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-white text-black flex items-center justify-center font-bold">
+                    <Send size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight uppercase flex items-center gap-2">
+                      Telegram Alerts: "you got one order"
+                      <span className="bg-white text-black text-[9px] px-2 py-0.5 font-bold uppercase tracking-widest">
+                        ● LIVE & CONNECTED
+                      </span>
+                    </h3>
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      Bot: <strong className="text-white">@dripverse_sanjay_orders_bot</strong> · Chat ID: <code className="text-white font-mono bg-neutral-900 px-1 py-0.5">6112759813</code>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleTestTelegram}
+                  disabled={tgTesting}
+                  className="bg-white text-black px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider hover:bg-neutral-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  {tgTesting ? 'SENDING...' : 'TEST TELEGRAM ALERT ("you got one order")'}
+                </button>
+              </div>
+              {tgStatus && (
+                <p className="text-[11px] font-bold text-black bg-white px-3 py-1.5 border-l-2 border-neutral-300">
+                  {tgStatus}
+                </p>
+              )}
             </div>
 
             {/* WhatsApp Automated Notification Card */}

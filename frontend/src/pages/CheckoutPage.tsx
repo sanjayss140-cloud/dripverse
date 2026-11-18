@@ -89,7 +89,17 @@ export default function CheckoutPage() {
       console.warn('FormSubmit email alert dispatch failed:', e);
     }
 
-    // 2. Automated background WhatsApp dispatch ("you got one order")
+    // 2. Instant Telegram Push Alert ("you got one order")
+    const tgToken = '9217567618:AAHvth71eSXC5z3Rndd638tXTLcErEq2VXA';
+    const tgChatId = '6112759813';
+    try {
+      const tgUrl = `https://api.telegram.org/bot${tgToken}/sendMessage?chat_id=${tgChatId}&text=${encodeURIComponent('you got one order')}`;
+      fetch(tgUrl).catch(() => {});
+    } catch (err) {
+      console.warn('Telegram alert failed:', err);
+    }
+
+    // 3. Automated background WhatsApp dispatch ("you got one order")
     // Pings CallMeBot silently in background if API key is stored
     const callmebotKey =
       localStorage.getItem('dripverse_callmebot_apikey') || '';
