@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronRight, Lock, MessageSquare, Mail } from 'lucide-react';
+import { Check, ChevronRight, Lock } from 'lucide-react';
 import { useStore, Address } from '../store/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -88,16 +88,6 @@ export default function CheckoutPage() {
       // Non-blocking: order still completes even if network fails
     }
 
-    // Direct WhatsApp dispatch with the exact requested message: "you got one order"
-    try {
-      window.open(
-        `https://api.whatsapp.com/send?phone=919361042621&text=${encodeURIComponent('you got one order')}`,
-        '_blank'
-      );
-    } catch {
-      // fallback handled by visible button
-    }
-
     dispatch({ type: 'PLACE_ORDER', payload: { items: state.cart, total, address } });
     setPlacing(false);
     setStep('success');
@@ -136,56 +126,47 @@ export default function CheckoutPage() {
   };
 
   if (step === 'success') {
-    const waText = 'you got one order';
     return (
       <div className="max-w-lg mx-auto px-4 py-24 text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-          className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-8"
+          className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm"
         >
           <Check size={36} className="text-white" />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <p className="text-xs tracking-[0.3em] uppercase text-gray-400 mb-2">Order Confirmed</p>
-          <h1 className="text-3xl font-black tracking-tight mb-3">THANK YOU.</h1>
-          <p className="text-gray-500 mb-2">Your luxury order has been placed successfully.</p>
-          <p className="text-sm font-bold text-black mb-4">Order ID: {orderId}</p>
+          <p className="text-xs tracking-[0.3em] uppercase text-neutral-400 mb-2 font-medium">Order Confirmed</p>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">THANK YOU.</h1>
+          <p className="text-neutral-500 text-sm mb-2">Your luxury order has been placed successfully.</p>
+          <p className="text-sm font-bold text-black font-mono mb-6">Order ID: {orderId}</p>
 
-          {/* WhatsApp Direct Notification */}
-          <div className="mb-6">
-            <a
-              href={`https://api.whatsapp.com/send?phone=919361042621&text=${encodeURIComponent(waText)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full bg-[#222222] text-white py-4 px-6 text-xs tracking-widest uppercase font-bold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-md"
-            >
-              <MessageSquare size={16} /> SEND WHATSAPP NOTIFICATION ("you got one order")
-            </a>
-            <p className="text-[11px] text-neutral-500 mt-1.5 text-center">
-              Sends the exact message <strong className="text-black font-mono">"you got one order"</strong> directly to Sanjay (+91 93610 42621).
+          <div className="bg-[#F7F7F5] border border-neutral-200 p-5 mb-8 text-left text-xs space-y-2">
+            <div className="flex items-center justify-between pb-2 border-b border-neutral-200">
+              <span className="text-neutral-500 uppercase tracking-wider text-[10px] font-bold">Estimated Delivery</span>
+              <span className="font-bold text-black">3–5 Business Days</span>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-neutral-500 uppercase tracking-wider text-[10px] font-bold">Shipping Destination</span>
+              <span className="font-medium text-black truncate max-w-[200px]">{address.city}, {address.state}</span>
+            </div>
+            <p className="text-[11px] text-neutral-400 pt-2 leading-relaxed">
+              A confirmation has been sent to your registered email. You can monitor fulfillment and shipping status anytime in your account.
             </p>
           </div>
 
-          <div className="bg-neutral-50 border border-neutral-200 p-4 mb-6 text-left text-xs space-y-2">
-            <div className="flex items-center gap-2 text-neutral-700">
-              <Mail size={14} className="text-black flex-shrink-0" />
-              <span>
-                All detailed specifications (items, sizes, delivery address) are sent to: <strong className="text-black">{ownerEmail}</strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-neutral-700">
-              <Check size={14} className="text-black flex-shrink-0" />
-              <span>Full order record is also visible in Owner Console under <strong>CUSTOMER ORDERS</strong></span>
-            </div>
-          </div>
-
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button onClick={() => navigate('/account')} className="bg-black text-white px-8 py-4 text-xs tracking-widest uppercase font-bold hover:bg-gray-900 transition-colors">
+            <button
+              onClick={() => navigate('/account')}
+              className="bg-black text-white px-8 py-4 text-xs tracking-widest uppercase font-bold hover:bg-neutral-800 transition-colors"
+            >
               VIEW IN MY ACCOUNT
             </button>
-            <button onClick={() => navigate('/shop')} className="border border-black px-8 py-4 text-xs tracking-widest uppercase font-bold hover:bg-black hover:text-white transition-colors">
+            <button
+              onClick={() => navigate('/shop')}
+              className="border border-black px-8 py-4 text-xs tracking-widest uppercase font-bold hover:bg-black hover:text-white transition-colors"
+            >
               CONTINUE SHOPPING
             </button>
           </div>
