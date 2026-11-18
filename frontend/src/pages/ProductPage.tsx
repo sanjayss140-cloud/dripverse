@@ -22,6 +22,7 @@ export default function ProductPage() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>('details');
+  const [isFillMode, setIsFillMode] = useState(false);
 
   React.useEffect(() => {
     if (product) {
@@ -163,8 +164,8 @@ export default function ProductPage() {
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
-                  className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 overflow-hidden border-2 transition-all duration-200 ${
-                    selectedImage === i ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'
+                  className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 overflow-hidden border-2 transition-all duration-200 bg-white p-1 ${
+                    selectedImage === i ? 'border-black' : 'border-neutral-200 opacity-60 hover:opacity-100'
                   }`}
                 >
                   <img
@@ -176,14 +177,24 @@ export default function ProductPage() {
                         e.currentTarget.src = fallback;
                       }
                     }}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </button>
               ))}
             </div>
 
             {/* Main image */}
-            <div className="flex-1 relative overflow-hidden bg-gray-100 aspect-[3/4]">
+            <div className="flex-1 relative overflow-hidden bg-[#F7F7F5] border border-neutral-100 aspect-[3/4] flex items-center justify-center">
+              {/* Fit / Fill toggle button */}
+              <button
+                type="button"
+                onClick={() => setIsFillMode(!isFillMode)}
+                className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm border border-neutral-200 px-2.5 py-1 text-[9px] uppercase tracking-widest font-bold text-neutral-800 hover:text-black hover:border-black transition-colors z-20 shadow-sm"
+                title={isFillMode ? 'Switch to Fit (Whole Product / No Crop)' : 'Switch to Fill (Full-Bleed)'}
+              >
+                {isFillMode ? 'FIT VIEW' : 'EXPAND'}
+              </button>
+
               <AnimatePresence mode="wait">
                 <motion.img
                   key={selectedImage}
@@ -199,12 +210,14 @@ export default function ProductPage() {
                       e.currentTarget.src = fallback;
                     }
                   }}
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full transition-all duration-300 ${
+                    isFillMode ? 'object-cover' : 'object-contain p-4 md:p-8'
+                  }`}
                 />
               </AnimatePresence>
 
               {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
+              <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                 {product.isNew && (
                   <span className="bg-black text-white text-[9px] tracking-[0.2em] uppercase px-2 py-1 font-bold">NEW</span>
                 )}

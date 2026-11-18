@@ -16,7 +16,16 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState('');
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isWideImage, setIsWideImage] = useState(false);
   const inWishlist = isInWishlist(product.id);
+
+  const isAccessoryOrPackshot =
+    product.category === 'accessories' ||
+    product.category === 'footwear' ||
+    ['sunglasses', 'watches', 'chains', 'bags', 'boots', 'sneakers', 'belts', 'shoes'].includes(
+      (product.subcategory || '').toLowerCase()
+    );
+  const shouldContain = isAccessoryOrPackshot || isWideImage;
 
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p);
@@ -58,19 +67,25 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     >
       <Link to={`/product/${product.id}`} className="block">
         {/* Image */}
-        <div className="relative overflow-hidden bg-gray-100 aspect-[3/4]">
+        <div className={`relative overflow-hidden aspect-[3/4] flex items-center justify-center ${shouldContain ? 'bg-[#F7F7F5]' : 'bg-gray-100'}`}>
           <img
             src={product.images[0] || getFallbackImage(product.category, product.subcategory)}
             alt={product.name}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && img.naturalHeight && img.naturalWidth / img.naturalHeight > 0.82) {
+                setIsWideImage(true);
+              }
+            }}
             onError={(e) => {
               const fallback = getFallbackImage(product.category, product.subcategory);
               if (e.currentTarget.src !== fallback) {
                 e.currentTarget.src = fallback;
               }
             }}
-            className={`w-full h-full object-cover transition-all duration-700 ${
-              hovered && product.images[1] ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-            }`}
+            className={`w-full h-full transition-all duration-700 ${
+              shouldContain ? 'object-contain p-3 md:p-4' : 'object-cover'
+            } ${hovered && product.images[1] ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
           />
           {product.images[1] && (
             <img
@@ -82,9 +97,9 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                   e.currentTarget.src = fallback;
                 }
               }}
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-              }`}
+              className={`absolute inset-0 w-full h-full transition-all duration-700 ${
+                shouldContain ? 'object-contain p-3 md:p-4' : 'object-cover'
+              } ${hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
             />
           )}
 

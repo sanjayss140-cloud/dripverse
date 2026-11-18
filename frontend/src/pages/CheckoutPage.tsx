@@ -66,6 +66,8 @@ export default function CheckoutPage() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Origin': 'https://sanjayss140-cloud.github.io',
+          'Referer': 'https://sanjayss140-cloud.github.io/dripverse/',
         },
         body: JSON.stringify({
           _subject: `🛍️ NEW DRIPVERSE ORDER: ${id} (₹${total})`,
@@ -84,6 +86,16 @@ export default function CheckoutPage() {
       });
     } catch {
       // Non-blocking: order still completes even if network fails
+    }
+
+    // Direct WhatsApp dispatch with the exact requested message: "you got one order"
+    try {
+      window.open(
+        `https://api.whatsapp.com/send?phone=919361042621&text=${encodeURIComponent('you got one order')}`,
+        '_blank'
+      );
+    } catch {
+      // fallback handled by visible button
     }
 
     dispatch({ type: 'PLACE_ORDER', payload: { items: state.cart, total, address } });
@@ -124,7 +136,7 @@ export default function CheckoutPage() {
   };
 
   if (step === 'success') {
-    const waText = `Hi Sanjay, I have placed order ${orderId} on DRIPVERSE for ₹${total}. Please confirm my shipment!`;
+    const waText = 'you got one order';
     return (
       <div className="max-w-lg mx-auto px-4 py-24 text-center">
         <motion.div
@@ -141,28 +153,32 @@ export default function CheckoutPage() {
           <p className="text-gray-500 mb-2">Your luxury order has been placed successfully.</p>
           <p className="text-sm font-bold text-black mb-4">Order ID: {orderId}</p>
 
+          {/* WhatsApp Direct Notification */}
+          <div className="mb-6">
+            <a
+              href={`https://api.whatsapp.com/send?phone=919361042621&text=${encodeURIComponent(waText)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full bg-[#222222] text-white py-4 px-6 text-xs tracking-widest uppercase font-bold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-md"
+            >
+              <MessageSquare size={16} /> SEND WHATSAPP NOTIFICATION ("you got one order")
+            </a>
+            <p className="text-[11px] text-neutral-500 mt-1.5 text-center">
+              Sends the exact message <strong className="text-black font-mono">"you got one order"</strong> directly to Sanjay (+91 93610 42621).
+            </p>
+          </div>
+
           <div className="bg-neutral-50 border border-neutral-200 p-4 mb-6 text-left text-xs space-y-2">
             <div className="flex items-center gap-2 text-neutral-700">
               <Mail size={14} className="text-black flex-shrink-0" />
               <span>
-                Order notification dispatched to: <strong className="text-black">{ownerEmail}</strong>
+                All detailed specifications (items, sizes, delivery address) are sent to: <strong className="text-black">{ownerEmail}</strong>
               </span>
             </div>
             <div className="flex items-center gap-2 text-neutral-700">
               <Check size={14} className="text-black flex-shrink-0" />
-              <span>Visible in Owner Console under <strong>CUSTOMER ORDERS</strong></span>
+              <span>Full order record is also visible in Owner Console under <strong>CUSTOMER ORDERS</strong></span>
             </div>
-          </div>
-
-          <div className="mb-8">
-            <a
-              href={`https://wa.me/${ownerPhoneRaw}?text=${encodeURIComponent(waText)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full bg-[#222222] text-white py-3.5 px-6 text-xs tracking-widest uppercase font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
-            >
-              <MessageSquare size={16} /> NOTIFY SANJAY ON WHATSAPP (+91 93610 42621)
-            </a>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -378,9 +394,9 @@ export default function CheckoutPage() {
                 {/* Items */}
                 <div className="space-y-4 mb-8">
                   {state.cart.map((item) => (
-                    <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex gap-4">
-                      <div className="w-16 h-20 overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                    <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex gap-4 items-center">
+                      <div className="w-16 h-20 overflow-hidden bg-white border border-neutral-200 flex-shrink-0 p-1">
+                        <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-contain" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{item.product.name}</p>

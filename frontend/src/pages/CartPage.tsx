@@ -73,7 +73,7 @@ export default function CartPage() {
                 className="py-6 border-b border-gray-100 grid md:grid-cols-[auto_1fr_auto_auto_auto] gap-4 items-center"
               >
                 {/* Image */}
-                <Link to={`/product/${item.product.id}`} className="w-20 h-24 overflow-hidden bg-gray-100 flex-shrink-0 block">
+                <Link to={`/product/${item.product.id}`} className="w-20 h-24 overflow-hidden bg-[#F7F7F5] border border-neutral-200 flex-shrink-0 block p-1">
                   <img
                     src={item.product.images[0] || getFallbackImage(item.product.category, item.product.subcategory)}
                     alt={item.product.name}
@@ -83,7 +83,7 @@ export default function CartPage() {
                         e.currentTarget.src = fallback;
                       }
                     }}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                   />
                 </Link>
 

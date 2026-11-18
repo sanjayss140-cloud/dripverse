@@ -203,13 +203,17 @@ export function cleanImageUrl(rawUrl: string): string {
 }
 
 /**
- * Resizes and compresses an image file from the user's computer
- * to a lightweight base64 Data URL (JPEG, max 1000px, ~100-150KB),
- * preventing LocalStorage quota overflow while keeping sharp luxury visual quality.
+ * Resizes and compresses an image file from the user's computer,
+ * with smart 3:4 luxury studio framing so wide items (sunglasses, shoes, etc.)
+ * NEVER get cropped or cut off.
  */
-export function compressImageFile(file: File, maxDim = 1000, quality = 0.85): Promise<string> {
+export function compressImageFile(
+  file: File,
+  maxDim = 1000,
+  quality = 0.86,
+  frameToStudio = true
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    // If not an image
     if (!file.type.startsWith('image/')) {
       reject(new Error('Please select an image file (JPEG, PNG, WebP).'));
       return;
@@ -218,12 +222,37 @@ export function compressImageFile(file: File, maxDim = 1000, quality = 0.85): Pr
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Failed to read file from computer.'));
     reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Failed to parse image.'));
-      img.onload = () => {
+      const src = e.target?.result as string;
+      frameImageSource(src, frameToStudio ? 'studio-fit' : 'original', quality)
+        .then(resolve)
+        .catch(reject);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Frames any image (base64 Data URL or remote image URL) onto a clean 3:4 luxury canvas.
+ * Wide items (like sunglasses, shoes, watches) or square images are centered with
+ * elegant breathing room so they are 100% visible and NEVER cropped.
+ */
+export function frameImageSource(
+  imageSrc: string,
+  mode: 'studio-fit' | 'original' = 'studio-fit',
+  quality = 0.86
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onerror = () => reject(new Error('Failed to load image for framing.'));
+    img.onload = () => {
+      const aspect = img.width / img.height;
+
+      // If user selected raw original aspect or image is already vertical 3:4
+      if (mode === 'original' || (aspect >= 0.72 && aspect <= 0.78)) {
         let width = img.width;
         let height = img.height;
-
+        const maxDim = 1000;
         if (width > maxDim || height > maxDim) {
           if (width > height) {
             height = Math.round((height * maxDim) / width);
@@ -233,27 +262,76 @@ export function compressImageFile(file: File, maxDim = 1000, quality = 0.85): Pr
             height = maxDim;
           }
         }
-
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          // fallback to raw data url if canvas not supported
-          resolve(reader.result as string);
+          resolve(imageSrc);
           return;
         }
-
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+        return;
+      }
 
-        // Convert to high-quality JPEG
-        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressedBase64);
-      };
-      img.src = e.target?.result as string;
+      // ── STUDIO 3:4 PACKSHOT FRAMING (No-Crop Guarantee) ──
+      // Target 3:4 aspect ratio (960 x 1280)
+      const targetW = 960;
+      const targetH = 1280;
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(imageSrc);
+        return;
+      }
+
+      // Sample image corner to match background if not white
+      let bgColor = '#FFFFFF';
+      try {
+        const sampleCanvas = document.createElement('canvas');
+        sampleCanvas.width = 4;
+        sampleCanvas.height = 4;
+        const sCtx = sampleCanvas.getContext('2d');
+        if (sCtx) {
+          sCtx.drawImage(img, 0, 0, 4, 4);
+          const pixel = sCtx.getImageData(0, 0, 1, 1).data;
+          // If dark/black background
+          if (pixel[0] < 30 && pixel[1] < 30 && pixel[2] < 30 && pixel[3] > 100) {
+            bgColor = '#000000';
+          } else if (pixel[3] < 20) {
+            // Transparent PNG: use crisp luxury soft white
+            bgColor = '#FFFFFF';
+          }
+        }
+      } catch {
+        bgColor = '#FFFFFF';
+      }
+
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, targetW, targetH);
+
+      // Give 8% breathing room margin
+      const margin = 0.08;
+      const availW = targetW * (1 - margin * 2);
+      const availH = targetH * (1 - margin * 2);
+
+      const scale = Math.min(availW / img.width, availH / img.height);
+      const drawW = Math.round(img.width * scale);
+      const drawH = Math.round(img.height * scale);
+      const dx = Math.round((targetW - drawW) / 2);
+      const dy = Math.round((targetH - drawH) / 2);
+
+      ctx.drawImage(img, dx, dy, drawW, drawH);
+
+      resolve(canvas.toDataURL('image/jpeg', quality));
     };
-    reader.readAsDataURL(file);
+
+    img.src = imageSrc;
   });
 }
+

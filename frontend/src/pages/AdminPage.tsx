@@ -26,6 +26,7 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle2,
+  MessageSquare,
 } from 'lucide-react';
 import { useStore, Order, CustomerInquiry } from '../store/StoreContext';
 import { Product } from '../data/products';
@@ -33,6 +34,7 @@ import {
   getFallbackImage,
   cleanImageUrl,
   compressImageFile,
+  frameImageSource,
   FASHION_PRESETS,
 } from '../utils/imageHelper';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -468,7 +470,7 @@ export default function AdminPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             {/* Interactive Thumbnail */}
-                            <div className="relative group/thumb w-12 h-14 bg-neutral-100 border border-neutral-200 flex-shrink-0 overflow-hidden">
+                            <div className="relative group/thumb w-12 h-14 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden p-0.5 flex items-center justify-center">
                               <img
                                 src={product.images[0] || fallback}
                                 alt={product.name}
@@ -477,7 +479,7 @@ export default function AdminPage() {
                                     e.currentTarget.src = fallback;
                                   }
                                 }}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                               />
                               <button
                                 onClick={() => {
@@ -485,10 +487,10 @@ export default function AdminPage() {
                                   setQuickImageValue(product.images[0] || fallback);
                                 }}
                                 className="absolute inset-0 bg-black/70 text-white flex flex-col items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
-                                title="Change photo / Upload from computer"
+                                title="Change photo / Upload from computer / Auto-fit"
                               >
                                 <Camera size={13} />
-                                <span className="text-[8px] font-bold mt-0.5">CHANGE</span>
+                                <span className="text-[8px] font-bold mt-0.5">FIT / EDIT</span>
                               </button>
                             </div>
 
@@ -693,6 +695,15 @@ export default function AdminPage() {
 
                     <div className="flex items-center gap-3">
                       <span className="text-base font-black">{formatPrice(order.total)}</span>
+                      <a
+                        href="https://api.whatsapp.com/send?phone=919361042621&text=you%20got%20one%20order"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-black text-white px-2.5 py-1.5 text-[9px] tracking-wider uppercase font-bold hover:bg-neutral-800 transition-colors inline-flex items-center gap-1"
+                        title="Alert Sanjay on WhatsApp with 'you got one order'"
+                      >
+                        <MessageSquare size={11} /> WhatsApp ("you got one order")
+                      </a>
                       <select
                         value={order.status}
                         onChange={(e) =>
@@ -722,7 +733,7 @@ export default function AdminPage() {
                               onError={(e) => {
                                 e.currentTarget.src = getFallbackImage(item.product.category, item.product.subcategory);
                               }}
-                              className="w-10 h-12 object-cover bg-neutral-100 border border-neutral-200"
+                              className="w-10 h-12 object-contain bg-white border border-neutral-200 p-0.5"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="font-bold truncate">{item.product.name}</p>
@@ -776,12 +787,20 @@ export default function AdminPage() {
                   </p>
                   <div className="mt-3 flex gap-2 flex-wrap">
                     <a
-                      href="https://mail.google.com/mail/u/0/#search/DRIPVERSE+OR+FormSubmit"
+                      href="https://mail.google.com/mail/u/0/#search/in%3Aanywhere+formsubmit"
                       target="_blank"
                       rel="noreferrer"
                       className="bg-black text-white px-3.5 py-1.5 text-[10px] tracking-wider uppercase font-bold hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5"
                     >
-                      Search Gmail for FormSubmit Activation <ExternalLink size={12} />
+                      Search All Gmail for FormSubmit <ExternalLink size={12} />
+                    </a>
+                    <a
+                      href="https://mail.google.com/mail/u/0/#spam"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="border border-black text-black px-3.5 py-1.5 text-[10px] tracking-wider uppercase font-bold hover:bg-black hover:text-white transition-colors inline-flex items-center gap-1.5"
+                    >
+                      Open Gmail Spam Folder <ExternalLink size={12} />
                     </a>
                   </div>
                 </div>
@@ -857,22 +876,42 @@ export default function AdminPage() {
             <div className="space-y-5 text-xs">
               {/* Preview */}
               <div className="flex gap-4 items-center p-3 bg-neutral-50 border border-neutral-200">
-                <div className="w-20 h-24 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden">
+                <div className="w-20 h-24 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden p-1 flex items-center justify-center">
                   <img
                     src={quickImageValue || getFallbackImage(quickImageTarget.category, quickImageTarget.subcategory)}
                     alt=""
                     onError={(e) => {
                       e.currentTarget.src = getFallbackImage(quickImageTarget.category, quickImageTarget.subcategory);
                     }}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
-                <div>
-                  <p className="font-bold text-black text-sm">{quickImageTarget.name}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-black text-sm truncate">{quickImageTarget.name}</p>
                   <p className="text-neutral-400 uppercase text-[10px]">{quickImageTarget.category} / {quickImageTarget.subcategory}</p>
                   <p className="text-[11px] text-neutral-500 mt-1">
                     {quickImageValue.startsWith('data:image') ? '✓ Local image uploaded from PC' : 'Direct URL active'}
                   </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (quickImageValue) {
+                        try {
+                          setUploadLoading(true);
+                          const framed = await frameImageSource(quickImageValue, 'studio-fit');
+                          setQuickImageValue(framed);
+                        } catch (err: any) {
+                          alert('Could not re-frame: ' + err.message);
+                        } finally {
+                          setUploadLoading(false);
+                        }
+                      }
+                    }}
+                    className="mt-2 bg-black text-white px-2.5 py-1 text-[9px] tracking-wider uppercase font-bold hover:bg-neutral-800 transition-colors inline-flex items-center gap-1"
+                    title="Automatically centers the image into a clean 3:4 studio packshot without any cropping"
+                  >
+                    <Wand2 size={11} /> {uploadLoading ? 'Framing...' : 'Auto-Fit Frame (No Crop)'}
+                  </button>
                 </div>
               </div>
 
@@ -995,14 +1034,14 @@ export default function AdminPage() {
                 <label className="font-bold uppercase tracking-wider text-neutral-700 block">Garment Photo</label>
                 
                 <div className="flex gap-4 items-center">
-                  <div className="w-16 h-20 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden">
+                  <div className="w-16 h-20 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden p-1 flex items-center justify-center">
                     <img
                       src={editingProduct.images?.[0] || getFallbackImage(editingProduct.category, editingProduct.subcategory)}
                       alt=""
                       onError={(e) => {
                         e.currentTarget.src = getFallbackImage(editingProduct.category, editingProduct.subcategory);
                       }}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                   
@@ -1202,14 +1241,14 @@ export default function AdminPage() {
                 </label>
 
                 <div className="flex gap-4 items-center">
-                  <div className="w-20 h-24 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden">
+                  <div className="w-20 h-24 bg-white border border-neutral-200 flex-shrink-0 overflow-hidden p-1 flex items-center justify-center">
                     <img
                       src={newProd.images?.[0] || getFallbackImage(newProd.category, newProd.subcategory)}
                       alt=""
                       onError={(e) => {
                         e.currentTarget.src = getFallbackImage(newProd.category, newProd.subcategory);
                       }}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
 
